@@ -8,8 +8,7 @@ async function initializeStreamModules() {
   try {
     streamChain = await import('stream-chain');
     streamJson = await import('stream-json');
-    const streamValuesModule = await import('stream-json/streamers/StreamValues.js');
-    streamValues = streamValuesModule.default;
+    streamValues = await import('stream-json/streamers/StreamValues.js');
 
     return { success: true };
   } catch (error) {
@@ -77,7 +76,7 @@ export default class StreamJSONParser {
       let objectCount = 0;
 
       // 创建流式JSON解析管道
-      const pipeline = streamChain.chain([
+      const pipeline = streamChain.default.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
         streamJson.default.parser(),
         new streamValues() // 流式输出值
@@ -164,7 +163,7 @@ export default class StreamJSONParser {
 
       return new Promise((resolve, reject) => {
         // 创建流式管道来解析数组元素
-        const pipeline = streamChain.chain([
+        const pipeline = streamChain.default.chain([
           fs.createReadStream(filePath),
           streamJson.default.parser(),
           new streamValues()
@@ -243,14 +242,15 @@ export default class StreamJSONParser {
     await this.initializeModules();
 
     try {
-      const { pick } = await import('stream-json/filters/Pick.js');
+      const pickModule = await import('stream-json/filters/Pick.js');
+      const pick = pickModule.default.pick;
 
       const stats = fs.statSync(filePath);
       const totalSize = stats.size;
 
       return new Promise((resolve, reject) => {
         // 创建带有Pick过滤器的管道
-        const pipeline = streamChain.chain([
+        const pipeline = streamChain.default.chain([
           fs.createReadStream(filePath),
           streamJson.default.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
