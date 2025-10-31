@@ -76,9 +76,9 @@ export default class StreamJSONParser {
       let objectCount = 0;
 
       // 创建流式JSON解析管道
-      const pipeline = streamChain.default.chain([
+      const pipeline = streamChain.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
-        streamJson.default.parser(),
+        streamJson.parser(),
         new streamValues() // 流式输出值
       ]);
 
@@ -163,9 +163,9 @@ export default class StreamJSONParser {
 
       return new Promise((resolve, reject) => {
         // 创建流式管道来解析数组元素
-        const pipeline = streamChain.default.chain([
+        const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
-          streamJson.default.parser(),
+          streamJson.parser(),
           new streamValues()
         ]);
 
@@ -250,9 +250,9 @@ export default class StreamJSONParser {
 
       return new Promise((resolve, reject) => {
         // 创建带有Pick过滤器的管道
-        const pipeline = streamChain.default.chain([
+        const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
-          streamJson.default.parser(),
+          streamJson.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
           new streamValues()
         ]);
