@@ -8,8 +8,8 @@ async function initializeStreamModules() {
   try {
     streamChain = await import('stream-chain');
     streamJson = await import('stream-json');
-    streamValues = (await import('stream-json/streamers/StreamValues.js')).default ||
-                   (await import('stream-json/streamers/StreamValues.js'));
+    const streamValuesModule = await import('stream-json/streamers/StreamValues.js');
+    streamValues = streamValuesModule.default;
 
     return { success: true };
   } catch (error) {
@@ -80,7 +80,7 @@ export default class StreamJSONParser {
       const pipeline = streamChain.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
         streamJson.default.parser(),
-        streamValues() // 流式输出值
+        new streamValues() // 流式输出值
       ]);
 
       const topLevelKeys = new Set();
@@ -167,7 +167,7 @@ export default class StreamJSONParser {
         const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
           streamJson.default.parser(),
-          streamValues()
+          new streamValues()
         ]);
 
         const arrayElements = [];
@@ -254,7 +254,7 @@ export default class StreamJSONParser {
           fs.createReadStream(filePath),
           streamJson.default.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
-          streamValues()
+          new streamValues()
         ]);
 
         const deepPaths = [];
