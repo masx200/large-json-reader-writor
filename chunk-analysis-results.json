@@ -1,0 +1,53 @@
+{
+  "./test-output.json": {
+    "method": "分块读取方法",
+    "file": "./test-output.json",
+    "basicInfo": {
+      "fileSize": "147.40 KB",
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "totalCharacters": 936626
+    },
+    "error": "无法解析顶层JSON结构",
+    "sampleChunks": [],
+    "chunkValidation": {
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "validationRate": "0.00%"
+    }
+  },
+  "./large-example.json": {
+    "method": "分块读取方法",
+    "file": "./large-example.json",
+    "basicInfo": {
+      "fileSize": "306.68 KB",
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "totalCharacters": 16053
+    },
+    "error": "无法解析顶层JSON结构",
+    "sampleChunks": [],
+    "chunkValidation": {
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "validationRate": "0.00%"
+    }
+  },
+  "./openapi.json": {
+    "method": "分块读取方法",
+    "file": "./openapi.json",
+    "basicInfo": {
+      "fileSize": "221.29 KB",
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "totalCharacters": 161102
+    },
+    "error": "无法解析顶层JSON结构",
+    "sampleChunks": [],
+    "chunkValidation": {
+      "totalChunks": 10,
+      "validJSONChunks": 0,
+      "validationRate": "0.00%"
+    }
+  }
+}

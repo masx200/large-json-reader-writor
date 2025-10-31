@@ -1,0 +1,82 @@
+{
+  "basicInfo": {
+    "fileSize": "221.29 KB",
+    "totalKeys": 4,
+    "generatedAt": "2025-10-31T15:02:09.628Z"
+  },
+  "dataStructure": {
+    "objects": 5885,
+    "arrays": 703,
+    "strings": 5243,
+    "numbers": 112,
+    "booleans": 514,
+    "nulls": 1,
+    "totalElements": 12458
+  },
+  "topLevelKeys": [
+    "openapi",
+    "info",
+    "paths",
+    "components"
+  ],
+  "tableAnalysis": {
+    "totalTables": 3,
+    "tablesWithData": 0,
+    "emptyTables": 3,
+    "largestTables": [
+      {
+        "name": "info",
+        "recordCount": 0,
+        "size": 0
+      },
+      {
+        "name": "paths",
+        "recordCount": 0,
+        "size": 0
+      },
+      {
+        "name": "components",
+        "recordCount": 0,
+        "size": 0
+      }
+    ],
+    "detailedAnalysis": {
+      "info": {
+        "recordCount": 0,
+        "hasRecords": false,
+        "isEmpty": true,
+        "fields": {},
+        "estimatedSize": 0,
+        "structure": {}
+      },
+      "paths": {
+        "recordCount": 0,
+        "hasRecords": false,
+        "isEmpty": true,
+        "fields": {},
+        "estimatedSize": 0,
+        "structure": {}
+      },
+      "components": {
+        "recordCount": 0,
+        "hasRecords": false,
+        "isEmpty": true,
+        "fields": {},
+        "estimatedSize": 0,
+        "structure": {}
+      }
+    }
+  },
+  "complexity": {
+    "depth": 9,
+    "breadth": 4,
+    "density": 29.771146386347688,
+    "nestingLevel": 9
+  },
+  "summary": {
+    "type": "Database Export",
+    "format": "Per-table JSON structure",
+    "encoding": "UTF-8",
+    "structure": "Each table contained in separate top-level object"
+  }
+}
