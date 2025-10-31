@@ -551,7 +551,7 @@ export default class JSONAnalyzer {
 }
 
 // 如果直接运行此文件，执行分析
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.main) {
   async function main() {
     const analyzer = new JSONAnalyzer();
 

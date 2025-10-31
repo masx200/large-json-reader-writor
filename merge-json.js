@@ -124,7 +124,7 @@ function main() {
 }
 
 // 运行主函数
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.main) {
     main();
 }
 
