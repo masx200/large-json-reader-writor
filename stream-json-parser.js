@@ -79,7 +79,7 @@ export default class StreamJSONParser {
       const pipeline = streamChain.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
         streamJson.parser(),
-        new streamValues() // 流式输出值
+        new streamValues.default() // 流式输出值
       ]);
 
       const topLevelKeys = new Set();
@@ -166,7 +166,7 @@ export default class StreamJSONParser {
         const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
           streamJson.parser(),
-          new streamValues()
+          new streamValues.default()
         ]);
 
         const arrayElements = [];
@@ -254,7 +254,7 @@ export default class StreamJSONParser {
           fs.createReadStream(filePath),
           streamJson.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
-          new streamValues()
+          new streamValues.default()
         ]);
 
         const deepPaths = [];
@@ -464,13 +464,14 @@ export default class StreamJSONParser {
         });
       }
 
-      // 3. 深度路径解析（如果启用）
+      // 3. 深度路径解析（暂时禁用，由于Pick过滤器问题）
       if (enableDeepAnalysis && results.basic.success && targetPaths.length > 0) {
-        console.log('🔍 执行深度路径解析...');
-        results.deepPaths = await this.parseDeepPaths(filePath, {
-          targetPaths: targetPaths.length > 0 ? targetPaths : results.basic.topLevelKeys.slice(0, 10),
-          maxDepth: 5
-        });
+        console.log('🔍 深度路径解析暂时禁用（Pick过滤器修复中）...');
+        results.deepPaths = {
+          success: false,
+          method: "深度路径流式解析",
+          error: "Pick过滤器功能暂时禁用，正在修复中"
+        };
       }
 
       return {
