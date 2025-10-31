@@ -3,20 +3,18 @@
   "version": "1.0.0",
   "description": "这是一个 Node.js 模块，专门用于处理大型 JSON 文件的下载、读取和写入操作。",
   "main": "index.js",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "keywords": [],
   "author": "masx200 <masx200@qq.com>",
   "license": "ISC",
   "type": "module",
   "dependencies": {
     "@types/node": "^24.9.2",
+    "stream-json": "^1.9.1",
     "undici": "^7.16.0"
   },
   "repository": {
     "type": "git",
-    "url":" https://gitee.com/masx200/large-json-reader-writor.git"
-  },
-  "devDependencies": {}
+    "url": " https://gitee.com/masx200/large-json-reader-writor.git"
+  }
 }
