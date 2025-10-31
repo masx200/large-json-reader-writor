@@ -14,7 +14,7 @@ export default class AdvancedJSONParser {
       structure: {},
       paths: [],
       maxDepth: 0,
-      complexity: {}
+      complexity: {},
     };
   }
 
@@ -25,7 +25,7 @@ export default class AdvancedJSONParser {
     const {
       chunkSize = 1024 * 20, // 20KB chunks
       maxPaths = 1000,
-      progressCallback = null
+      progressCallback = null,
     } = options;
 
     console.log(`开始流式解析: ${filePath}`);
@@ -40,7 +40,7 @@ export default class AdvancedJSONParser {
       const pipeline = chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
         parser(),
-        streamObject()
+        streamObject(),
       ]);
 
       let structure = {};
@@ -49,7 +49,7 @@ export default class AdvancedJSONParser {
       let totalElements = 0;
       let pathCounts = {};
 
-      pipeline.on('data', (data) => {
+      pipeline.on("data", (data) => {
         // 更新处理进度
         processedSize += JSON.stringify(data).length;
         if (progressCallback) {
@@ -64,7 +64,7 @@ export default class AdvancedJSONParser {
         }
       });
 
-      pipeline.on('end', () => {
+      pipeline.on("end", () => {
         const result = {
           success: true,
           method: "stream-json流式解析",
@@ -76,23 +76,29 @@ export default class AdvancedJSONParser {
             topLevelKeyCount: topLevelKeys.size,
             totalElements: totalElements,
             maxDepth: maxDepth,
-            pathCounts: pathCounts
+            pathCounts: pathCounts,
           },
-          complexity: this.calculateComplexity(structure, topLevelKeys.size, totalSize)
+          complexity: this.calculateComplexity(
+            structure,
+            topLevelKeys.size,
+            totalSize,
+          ),
         };
 
-        console.log(`流式解析完成! 顶层键: ${topLevelKeys.size}, 元素: ${totalElements}`);
+        console.log(
+          `流式解析完成! 顶层键: ${topLevelKeys.size}, 元素: ${totalElements}`,
+        );
         resolve(result);
       });
 
-      pipeline.on('error', (error) => {
-        console.error('流式解析错误:', error);
+      pipeline.on("error", (error) => {
+        console.error("流式解析错误:", error);
         resolve({
           success: false,
           method: "stream-json流式解析",
           error: error.message,
           topLevelKeys: [],
-          structure: {}
+          structure: {},
         });
       });
     });
@@ -101,7 +107,14 @@ export default class AdvancedJSONParser {
   /**
    * 递归分析对象结构
    */
-  analyzeObject(key, value, structure, pathCounts, currentDepth, currentPath = '') {
+  analyzeObject(
+    key,
+    value,
+    structure,
+    pathCounts,
+    currentDepth,
+    currentPath = "",
+  ) {
     const path = currentPath ? `${currentPath}.${key}` : key;
 
     // 更新路径计数
@@ -113,38 +126,56 @@ export default class AdvancedJSONParser {
     }
 
     if (value === null || value === undefined) {
-      structure[key] = { type: 'null', count: 1 };
-    } else if (typeof value === 'string') {
-      structure[key] = { type: 'string', count: 1, sample: value.substring(0, 50) };
-    } else if (typeof value === 'number') {
-      structure[key] = { type: 'number', count: 1 };
-    } else if (typeof value === 'boolean') {
-      structure[key] = { type: 'boolean', count: 1 };
+      structure[key] = { type: "null", count: 1 };
+    } else if (typeof value === "string") {
+      structure[key] = {
+        type: "string",
+        count: 1,
+        sample: value.substring(0, 50),
+      };
+    } else if (typeof value === "number") {
+      structure[key] = { type: "number", count: 1 };
+    } else if (typeof value === "boolean") {
+      structure[key] = { type: "boolean", count: 1 };
     } else if (Array.isArray(value)) {
       structure[key] = {
-        type: 'array',
+        type: "array",
         count: value.length,
-        elementTypes: this.analyzeArrayTypes(value)
+        elementTypes: this.analyzeArrayTypes(value),
       };
 
       // 递归分析数组元素
       value.forEach((item, index) => {
-        if (typeof item === 'object' && item !== null) {
-          this.analyzeObject(`[${index}]`, item, structure, pathCounts, currentDepth + 1, path);
+        if (typeof item === "object" && item !== null) {
+          this.analyzeObject(
+            `[${index}]`,
+            item,
+            structure,
+            pathCounts,
+            currentDepth + 1,
+            path,
+          );
         }
       });
-    } else if (typeof value === 'object') {
+    } else if (typeof value === "object") {
       const keys = Object.keys(value);
       structure[key] = {
-        type: 'object',
+        type: "object",
         count: keys.length,
-        subKeys: keys.slice(0, 10) // 只存储前10个子键
+        subKeys: keys.slice(0, 10), // 只存储前10个子键
       };
 
       // 递归分析子对象
-      keys.forEach(subKey => {
-        if (typeof value[subKey] === 'object' && value[subKey] !== null) {
-          this.analyzeObject(subKey, value[subKey], structure, pathCounts, currentDepth + 1, path);
+      keys.forEach((subKey) => {
+        if (typeof value[subKey] === "object" && value[subKey] !== null) {
+          this.analyzeObject(
+            subKey,
+            value[subKey],
+            structure,
+            pathCounts,
+            currentDepth + 1,
+            path,
+          );
         }
       });
     }
@@ -155,10 +186,12 @@ export default class AdvancedJSONParser {
    */
   analyzeArrayTypes(array) {
     const types = {};
-    array.forEach(item => {
-      const type = Array.isArray(item) ? 'array' :
-                    item === null ? 'null' :
-                    typeof item;
+    array.forEach((item) => {
+      const type = Array.isArray(item)
+        ? "array"
+        : item === null
+        ? "null"
+        : typeof item;
       types[type] = (types[type] || 0) + 1;
     });
     return types;
@@ -175,14 +208,26 @@ export default class AdvancedJSONParser {
     let booleanCount = 0;
     let nullCount = 0;
 
-    Object.values(structure).forEach(item => {
+    Object.values(structure).forEach((item) => {
       switch (item.type) {
-        case 'object': objectCount++; break;
-        case 'array': arrayCount++; break;
-        case 'string': stringCount++; break;
-        case 'number': numberCount++; break;
-        case 'boolean': booleanCount++; break;
-        case 'null': nullCount++; break;
+        case "object":
+          objectCount++;
+          break;
+        case "array":
+          arrayCount++;
+          break;
+        case "string":
+          stringCount++;
+          break;
+        case "number":
+          numberCount++;
+          break;
+        case "boolean":
+          booleanCount++;
+          break;
+        case "null":
+          nullCount++;
+          break;
       }
     });
 
@@ -190,15 +235,16 @@ export default class AdvancedJSONParser {
       depth: this.results.maxDepth,
       breadth: topLevelKeyCount,
       density: (objectCount + arrayCount) / (totalSize / 1024),
-      totalElements: objectCount + arrayCount + stringCount + numberCount + booleanCount + nullCount,
+      totalElements: objectCount + arrayCount + stringCount + numberCount +
+        booleanCount + nullCount,
       typeDistribution: {
         objects: objectCount,
         arrays: arrayCount,
         strings: stringCount,
         numbers: numberCount,
         booleans: booleanCount,
-        nulls: nullCount
-      }
+        nulls: nullCount,
+      },
     };
   }
 
@@ -209,7 +255,7 @@ export default class AdvancedJSONParser {
     const {
       chunkSize = 1024 * 20, // 20KB
       maxDepth = 5,
-      progressCallback = null
+      progressCallback = null,
     } = options;
 
     console.log(`开始深度块读取解析: ${filePath}`);
@@ -218,12 +264,12 @@ export default class AdvancedJSONParser {
     try {
       const stats = fs.statSync(filePath);
       const fileSize = stats.size;
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // 使用流式JSON解析器
       const result = await this.parseWithStreamJSON(filePath, {
         chunkSize: chunkSize,
-        progressCallback: progressCallback
+        progressCallback: progressCallback,
       });
 
       if (result.success) {
@@ -233,19 +279,20 @@ export default class AdvancedJSONParser {
           deepAnalysis: {
             deepPaths: this.extractDeepPaths(result.structure, maxDepth),
             nestedObjects: this.countNestedObjects(result.structure),
-            complexityPatterns: this.analyzeComplexityPatterns(result.structure)
-          }
+            complexityPatterns: this.analyzeComplexityPatterns(
+              result.structure,
+            ),
+          },
         };
       } else {
         throw new Error(result.error);
       }
-
     } catch (error) {
-      console.error('深度块读取解析失败:', error);
+      console.error("深度块读取解析失败:", error);
       return {
         success: false,
         method: "深度块读取解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -253,7 +300,7 @@ export default class AdvancedJSONParser {
   /**
    * 提取深层路径
    */
-  extractDeepPaths(structure, maxDepth, currentPath = '', depth = 0) {
+  extractDeepPaths(structure, maxDepth, currentPath = "", depth = 0) {
     const deepPaths = [];
 
     Object.entries(structure).forEach(([key, info]) => {
@@ -264,9 +311,14 @@ export default class AdvancedJSONParser {
       }
 
       if (info.subKeys && depth < maxDepth) {
-        info.subKeys.forEach(subKey => {
-          const subInfo = { type: 'unknown' }; // 简化处理
-          const subPaths = this.extractDeepPaths({ [subKey]: subInfo }, maxDepth, path, depth + 1);
+        info.subKeys.forEach((subKey) => {
+          const subInfo = { type: "unknown" }; // 简化处理
+          const subPaths = this.extractDeepPaths(
+            { [subKey]: subInfo },
+            maxDepth,
+            path,
+            depth + 1,
+          );
           deepPaths.push(...subPaths);
         });
       }
@@ -281,15 +333,18 @@ export default class AdvancedJSONParser {
   countNestedObjects(structure, currentDepth = 0) {
     let count = 0;
 
-    Object.values(structure).forEach(item => {
-      if (item.type === 'object') {
+    Object.values(structure).forEach((item) => {
+      if (item.type === "object") {
         count++;
         if (item.subKeys) {
           count += this.countNestedObjects({
-            ...item.subKeys.reduce((acc, key) => ({ ...acc, [key]: { type: 'object' } }), {})
+            ...item.subKeys.reduce(
+              (acc, key) => ({ ...acc, [key]: { type: "object" } }),
+              {},
+            ),
           }, currentDepth + 1);
         }
-      } else if (item.type === 'array' && item.elementTypes) {
+      } else if (item.type === "array" && item.elementTypes) {
         // 数组中包含的对象
         if (item.elementTypes.object) {
           count += item.elementTypes.object;
@@ -308,14 +363,14 @@ export default class AdvancedJSONParser {
       highlyNested: 0,
       largeArrays: 0,
       mixedTypes: 0,
-      complexObjects: 0
+      complexObjects: 0,
     };
 
-    Object.values(structure).forEach(item => {
-      if (item.type === 'array' && item.count > 100) {
+    Object.values(structure).forEach((item) => {
+      if (item.type === "array" && item.count > 100) {
         patterns.largeArrays++;
       }
-      if (item.type === 'object' && item.count > 20) {
+      if (item.type === "object" && item.count > 20) {
         patterns.complexObjects++;
       }
       if (item.elementTypes && Object.keys(item.elementTypes).length > 2) {
@@ -339,15 +394,15 @@ export default class AdvancedJSONParser {
 
     if (fileSizeKB < 100) {
       // 小文件：直接解析
-      console.log('使用直接解析方法');
+      console.log("使用直接解析方法");
       result = await this.parseDirect(filePath, options);
     } else if (fileSizeKB < 1024) {
       // 中等文件：流式解析
-      console.log('使用流式解析方法');
+      console.log("使用流式解析方法");
       result = await this.parseWithStreamJSON(filePath, options);
     } else {
       // 大文件：深度块读取
-      console.log('使用深度块读取解析方法');
+      console.log("使用深度块读取解析方法");
       result = await this.parseWithDeepChunkReading(filePath, options);
     }
 
@@ -355,7 +410,7 @@ export default class AdvancedJSONParser {
       ...result,
       fileSizeKB: fileSizeKB.toFixed(2),
       recommendedMethod: this.recommendMethod(fileSizeKB),
-      parseTime: new Date().toISOString()
+      parseTime: new Date().toISOString(),
     };
   }
 
@@ -364,7 +419,7 @@ export default class AdvancedJSONParser {
    */
   async parseDirect(filePath, options = {}) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
       const data = JSON.parse(content);
       const topLevelKeys = Object.keys(data);
 
@@ -375,14 +430,14 @@ export default class AdvancedJSONParser {
         structure: this.analyzeStructureDirect(data),
         stats: {
           fileSizeKB: fs.statSync(filePath).size / 1024,
-          topLevelKeyCount: topLevelKeys.length
-        }
+          topLevelKeyCount: topLevelKeys.length,
+        },
       };
     } catch (error) {
       return {
         success: false,
         method: "直接解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -390,31 +445,33 @@ export default class AdvancedJSONParser {
   /**
    * 直接结构分析
    */
-  analyzeStructureDirect(data, currentPath = '') {
+  analyzeStructureDirect(data, currentPath = "") {
     const structure = {};
 
-    if (typeof data === 'object' && data !== null) {
-      Object.keys(data).forEach(key => {
+    if (typeof data === "object" && data !== null) {
+      Object.keys(data).forEach((key) => {
         const value = data[key];
         const path = currentPath ? `${currentPath}.${key}` : key;
 
         if (Array.isArray(value)) {
           structure[key] = {
-            type: 'array',
+            type: "array",
             count: value.length,
-            elementTypes: this.analyzeArrayTypes(value)
+            elementTypes: this.analyzeArrayTypes(value),
           };
-        } else if (typeof value === 'object' && value !== null) {
+        } else if (typeof value === "object" && value !== null) {
           structure[key] = {
-            type: 'object',
+            type: "object",
             count: Object.keys(value).length,
             subKeys: Object.keys(value).slice(0, 10),
-            nestedStructure: this.analyzeStructureDirect(value, path)
+            nestedStructure: this.analyzeStructureDirect(value, path),
           };
         } else {
           structure[key] = {
             type: typeof value,
-            value: value !== null && value !== undefined ? value.toString().substring(0, 100) : 'null'
+            value: value !== null && value !== undefined
+              ? value.toString().substring(0, 100)
+              : "null",
           };
         }
       });

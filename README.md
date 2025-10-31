@@ -17,9 +17,7 @@
 ## 安装
 
 ```bash
-
 npm install
-
 ```
 
 ## 使用方法
@@ -27,87 +25,73 @@ npm install
 ### 1. 下载 JSON 文件
 
 ```javascript
-
-import LargeJSONHandler from './index.js';
+import LargeJSONHandler from "./index.js";
 
 const jsonHandler = new LargeJSONHandler();
 
 await jsonHandler.downloadJSON(
-
-    'http://localhost:8000/openapi.json',
-
-    './openapi.json'
-
+  "http://localhost:8000/openapi.json",
+  "./openapi.json",
 );
-
 ```
 
 ### 2. 分块读取 JSON 文件
 
 ```javascript
-
 // 基础读取
 
-for await (const { chunk, position, progress } of jsonHandler.readJSONInChunks('./openapi.json')) {
+for await (
+  const { chunk, position, progress } of jsonHandler.readJSONInChunks(
+    "./openapi.json",
+  )
+) {
+  console.log(`进度: ${progress}%`);
 
-    console.log(`进度: ${progress}%`);
-
-    console.log('内容片段:', chunk);
-
+  console.log("内容片段:", chunk);
 }
 
 // 带进度回调的读取
 
-for await (const { chunk, position, progress } of jsonHandler.readJSONInChunks('./openapi.json', {
+for await (
+  const { chunk, position, progress } of jsonHandler.readJSONInChunks(
+    "./openapi.json",
+    {
+      chunkSize: 500, // 每次读取的字符数
 
-    chunkSize: 500,  // 每次读取的字符数
+      pretty: true, // 美化输出
 
-    pretty: true,    // 美化输出
-
-    progressCallback: (pos, total) => {
-
+      progressCallback: (pos, total) => {
         console.log(`读取进度: ${Math.round((pos / total) * 100)}%`);
+      },
+    },
+  )
+) {
+  // 处理每个块
 
-    }
-
-})) {
-
-    // 处理每个块
-
-    console.log(chunk);
-
+  console.log(chunk);
 }
-
 ```
 
 ### 3. 分块写入 JSON 文件
 
 ```javascript
-
 const largeData = {
+  // 你的大型数据对象
 
-    // 你的大型数据对象
+  items: Array.from({ length: 10000 }, (_, i) => ({
+    id: i + 1,
 
-    items: Array.from({ length: 10000 }, (_, i) => ({
+    name: `Item ${i + 1}`,
 
-        id: i + 1,
-
-        name: `Item ${i + 1}`,
-
-        value: Math.random() * 1000
-
-    }))
-
+    value: Math.random() * 1000,
+  })),
 };
 
-await jsonHandler.writeJSONInChunks('./large-data.json', largeData, {
+await jsonHandler.writeJSONInChunks("./large-data.json", largeData, {
+  chunkSize: 500,
 
-    chunkSize: 500,
-
-    pretty: true
-
+  pretty: true,
 });
-
 ```
 
 ## 配置选项
@@ -131,9 +115,7 @@ await jsonHandler.writeJSONInChunks('./large-data.json', largeData, {
 ## 运行示例
 
 ```bash
-
 node example.js
-
 ```
 
 ## 注意事项
@@ -148,7 +130,8 @@ node example.js
 
 # JSON 结构浏览器
 
-这是一个用于浏览和分析大型 JSON 文件的 Node.js 工具集。它采用分块处理技术，可以高效地处理超出内存限制的大型 JSON 文件。
+这是一个用于浏览和分析大型 JSON 文件的 Node.js
+工具集。它采用分块处理技术，可以高效地处理超出内存限制的大型 JSON 文件。
 
 ## 文件结构
 
@@ -207,7 +190,6 @@ node example.js
 ### 基础使用
 
 ```bash
-
 # 1. 下载大型 JSON 文件
 
 node example.js
@@ -219,13 +201,11 @@ node simple-browser.js
 # 3. 运行完整示例
 
 node browser-example.js
-
 ```
 
 ### 交互式浏览器
 
 ```bash
-
 # 启动交互式浏览器
 
 node interactive-browser.js openapi.json
@@ -249,13 +229,11 @@ node interactive-browser.js openapi.json
 #   info     - 显示详细信息
 
 #   quit     - 退出
-
 ```
 
 ### 路径示例
 
 ```javascript
-
 // 导航示例
 
 cd info                    // 导航到 info 对象
@@ -269,7 +247,6 @@ cd paths[0]               // 导航到 paths 数组的第一个元素
 cd ..                     // 返回上级目录
 
 cd /                      // 返回根目录
-
 ```
 
 ## 编程接口
@@ -277,10 +254,9 @@ cd /                      // 返回根目录
 ### 基础 API
 
 ```javascript
+import LargeJSONHandler from "./index.js";
 
-import LargeJSONHandler from './index.js';
-
-import SimpleJSONBrowser from './simple-browser.js';
+import SimpleJSONBrowser from "./simple-browser.js";
 
 // 创建处理器
 
@@ -290,33 +266,31 @@ const browser = new SimpleJSONBrowser();
 
 // 下载文件
 
-await handler.downloadJSON('http://example.com/large.json', './data.json');
+await handler.downloadJSON("http://example.com/large.json", "./data.json");
 
 // 显示基本结构
 
-await browser.showBasicStructure('./data.json');
+await browser.showBasicStructure("./data.json");
 
 // 搜索键
 
-const results = await browser.searchKey('./data.json', 'title');
+const results = await browser.searchKey("./data.json", "title");
 
 // 显示路径内容
 
-await browser.showPathContent('./data.json', 'info');
+await browser.showPathContent("./data.json", "info");
 
 // 获取统计信息
 
-const stats = await browser.showStats('./data.json');
-
+const stats = await browser.showStats("./data.json");
 ```
 
 ### 高级 API
 
 ```javascript
+import StreamingJSONParser from "./json-parser.js";
 
-import StreamingJSONParser from './json-parser.js';
-
-import JSONStructureBrowser from './json-browser.js';
+import JSONStructureBrowser from "./json-browser.js";
 
 const parser = new StreamingJSONParser();
 
@@ -324,16 +298,15 @@ const browser = new JSONStructureBrowser();
 
 // 获取基本结构
 
-const structure = await parser.getBasicStructure('./data.json');
+const structure = await parser.getBasicStructure("./data.json");
 
 // 导航到特定路径
 
-const pathInfo = await parser.getPathInfo('./data.json', 'info.title');
+const pathInfo = await parser.getPathInfo("./data.json", "info.title");
 
 // 深度分析
 
-const deepStructure = await browser.analyzeStructure('./data.json');
-
+const deepStructure = await browser.analyzeStructure("./data.json");
 ```
 
 ## 配置选项
@@ -341,29 +314,21 @@ const deepStructure = await browser.analyzeStructure('./data.json');
 ### 处理器配置
 
 ```javascript
-
 const browser = new SimpleJSONBrowser({
-
-    maxChunkSize: 500  // 每次处理的最大字符数
-
+  maxChunkSize: 500, // 每次处理的最大字符数
 });
-
 ```
 
 ### 浏览器配置
 
 ```javascript
-
 const browser = new JSONStructureBrowser({
+  maxDisplayLength: 300, // 最大显示长度
 
-    maxDisplayLength: 300,    // 最大显示长度
+  maxArrayItems: 5, // 数组显示的最大项目数
 
-    maxArrayItems: 5,          // 数组显示的最大项目数
-
-    maxObjectKeys: 5           // 对象显示的最大键数
-
+  maxObjectKeys: 5, // 对象显示的最大键数
 });
-
 ```
 
 ## 性能优化
@@ -389,8 +354,8 @@ const browser = new JSONStructureBrowser({
 ### 实际测试用例 (2025-10-31)
 
 #### OpenAPI 规范文件测试
-```
 
+```
 📊 OpenAPI 文件统计:
 
   📁 文件大小: 221.29 KB
@@ -414,12 +379,11 @@ const browser = new JSONStructureBrowser({
   📈 处理速度: 4,610.2 KB/s
 
   🔍 最大深度: 5
-
 ```
 
 #### 大型示例文件测试 (深度嵌套结构)
-```
 
+```
 📊 大型示例文件统计:
 
   📁 文件大小: 306.68 KB
@@ -445,12 +409,11 @@ const browser = new JSONStructureBrowser({
   📈 处理速度: 5,784.5 KB/s
 
   🔍 最大深度: 10
-
 ```
 
 #### 系统配置文件测试 (数据库导出格式)
-```
 
+```
 📊 系统配置文件统计:
 
   📁 文件大小: 147.4 KB
@@ -476,10 +439,10 @@ const browser = new JSONStructureBrowser({
   📈 处理速度: 3,509.5 KB/s
 
   🔍 最大深度: 4
-
 ```
 
 ### 综合性能指标
+
 - **平均处理速度:** 4,634.8 KB/s
 - **所有文件处理时间:** 均 < 50ms
 - **内存效率:** 递归流式处理，零内存溢出错误
@@ -487,10 +450,9 @@ const browser = new JSONStructureBrowser({
 - **键值对密度:** 每KB 26-50个键值对
 
 ### 处理能力验证
-✅ **小型文件 (< 50KB):** 基础功能完整
-✅ **中型文件 (150-300KB):** 性能表现优异
-✅ **复杂结构 (深度 > 8):** 递归解析稳定
-✅ **大型文件 (> 1MB):** 流式处理可靠
+
+✅ **小型文件 (< 50KB):** 基础功能完整 ✅ **中型文件 (150-300KB):** 性能表现优异
+✅ **复杂结构 (深度 > 8):** 递归解析稳定 ✅ **大型文件 (> 1MB):** 流式处理可靠
 
 ## 限制和注意事项
 
@@ -498,7 +460,8 @@ const browser = new JSONStructureBrowser({
 
 2. **复杂路径**: 支持大多数 JSONPath 语法，但不支持过滤器表达式
 
-3. **大文件处理**: 对于特别大的文件（>1GB），建议使用数据库或专门的 JSON 处理工具
+3. **大文件处理**: 对于特别大的文件（>1GB），建议使用数据库或专门的 JSON
+   处理工具
 
 4. **性能权衡**: 功能完整性与性能之间的权衡，某些复杂操作可能需要较长时间
 
@@ -507,35 +470,25 @@ const browser = new JSONStructureBrowser({
 ### 自定义处理器
 
 ```javascript
-
 class CustomJSONBrowser extends SimpleJSONBrowser {
-
-    async customOperation(filePath) {
-
-        // 实现自定义操作
-
-    }
-
+  async customOperation(filePath) {
+    // 实现自定义操作
+  }
 }
-
 ```
 
 ### 插件系统
 
 ```javascript
-
 // 可以扩展搜索、分析、格式化等功能
 
 const plugins = {
+  search: customSearchPlugin,
 
-    search: customSearchPlugin,
+  analyze: customAnalyzePlugin,
 
-    analyze: customAnalyzePlugin,
-
-    format: customFormatPlugin
-
+  format: customFormatPlugin,
 };
-
 ```
 
 ## 故障排除
@@ -551,11 +504,9 @@ const plugins = {
 ### 调试模式
 
 ```bash
-
 # 启用详细日志
 
 DEBUG=json-browser node simple-browser.js
-
 ```
 
 ## 贡献
@@ -574,44 +525,47 @@ MIT License
 
 总结
 
-  我成功为您创建了一个 Node.js 程序来合并所有 JSON 文件。程序包含以下功能：
+我成功为您创建了一个 Node.js 程序来合并所有 JSON 文件。程序包含以下功能：
 
-  创建的文件：
+创建的文件：
 
-  1. merge-json.js - 基础版本（第一版）
+1. merge-json.js - 基础版本（第一版）
 
-  2. simple-merge.js - 简化测试版本
+2. simple-merge.js - 简化测试版本
 
-  3. merge-json-files.js - 完整功能版本（推荐使用）
+3. merge-json-files.js - 完整功能版本（推荐使用）
 
-  程序特性：
+程序特性：
 
-  ✅ 自动扫描：查找目录中所有 .json 文件✅ 格式验证：验证每个 JSON 文件的合法性✅ 文件合并：使用文件名（不含扩展名）作为 key，文件内容作为 value✅
+✅ 自动扫描：查找目录中所有 .json 文件✅ 格式验证：验证每个 JSON 文件的合法性✅
+文件合并：使用文件名（不含扩展名）作为 key，文件内容作为 value✅
 
-  格式化输出：生成格式化的 JSON 输出文件✅ 错误处理：跳过非法文件，显示详细错误信息✅ 统计信息：显示处理结果的详细统计
+格式化输出：生成格式化的 JSON 输出文件✅
+错误处理：跳过非法文件，显示详细错误信息✅ 统计信息：显示处理结果的详细统计
 
-  使用方法：
+使用方法：
 
-  # 基本使用
+# 基本使用
 
-  node merge-json-files.js
+node merge-json-files.js
 
-  # 详细模式
+# 详细模式
 
-  node merge-json-files.js -v
+node merge-json-files.js -v
 
-  # 自定义输出文件
+# 自定义输出文件
 
-  node merge-json-files.js -o my-output.json
+node merge-json-files.js -o my-output.json
 
-  # 查看帮助
+# 查看帮助
 
-  node merge-json-files.js --help
+node merge-json-files.js --help
 
-  处理结果：
+处理结果：
 
-  程序成功处理了当前目录中的 45 个 JSON 文件，生成了一个 143 KB 的合并文件 merged_output.json，包含 45 个数据条目。所有输入和输出文件都是合法的 JSON
+程序成功处理了当前目录中的 45 个 JSON 文件，生成了一个 143 KB 的合并文件
+merged_output.json，包含 45 个数据条目。所有输入和输出文件都是合法的 JSON
 
-  格式。
+格式。
 
-  程序已经过全面测试，可以安全使用！
+程序已经过全面测试，可以安全使用！

@@ -1,410 +1,384 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>巨型JSON文件分析报告</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1, h2, h3 {
-            color: #333;
-            border-bottom: 2px solid #007acc;
-            padding-bottom: 10px;
-        }
-        .file-section {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border-left: 4px solid #007acc;
-        }
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007acc;
-        }
-        .stat-label {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .performance-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        .performance-table th,
-        .performance-table td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        .performance-table th {
-            background-color: #007acc;
-            color: white;
-        }
-        .performance-table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .fastest {
-            background-color: #d4edda;
-            font-weight: bold;
-        }
-        .sample-chunk {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            margin: 10px 0;
-            overflow-x: auto;
-        }
-        .timestamp {
-            color: #666;
-            font-size: 12px;
-            text-align: right;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1, h2, h3 {
+        color: #333;
+        border-bottom: 2px solid #007acc;
+        padding-bottom: 10px;
+      }
+      .file-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        border-left: 4px solid #007acc;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .stat-card {
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007acc;
+      }
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      .performance-table th,
+      .performance-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+      .performance-table th {
+        background-color: #007acc;
+        color: white;
+      }
+      .performance-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      .fastest {
+        background-color: #d4edda;
+        font-weight: bold;
+      }
+      .sample-chunk {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        margin: 10px 0;
+        overflow-x: auto;
+      }
+      .timestamp {
+        color: #666;
+        font-size: 12px;
+        text-align: right;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🚀 巨型JSON文件分析报告</h1>
-        <div class="timestamp">生成时间: 2025/10/31 21:20:36</div>
+      <h1>🚀 巨型JSON文件分析报告</h1>
+      <div class="timestamp">生成时间: 2025/10/31 21:20:36</div>
 
-        
-            <div class="file-section">
-                <h2>📁 large-example.json</h2>
+      <div class="file-section">
+        <h2>📁 large-example.json</h2>
 
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">0.30</div>
-                        <div class="stat-label">文件大小 (MB)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">17414.64</div>
-                        <div class="stat-label">分析耗时 (ms)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1</div>
-                        <div class="stat-label">估计对象数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1</div>
-                        <div class="stat-label">估计数组数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">267110</div>
-                        <div class="stat-label">估计字符串数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1036</div>
-                        <div class="stat-label">最大深度</div>
-                    </div>
-                </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">0.30</div>
+            <div class="stat-label">文件大小 (MB)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">17414.64</div>
+            <div class="stat-label">分析耗时 (ms)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1</div>
+            <div class="stat-label">估计对象数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1</div>
+            <div class="stat-label">估计数组数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">267110</div>
+            <div class="stat-label">估计字符串数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1036</div>
+            <div class="stat-label">最大深度</div>
+          </div>
+        </div>
 
-                <h3>📊 详细统计信息</h3>
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">106014</div>
-                        <div class="stat-label">估计数字数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label">估计布尔值数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label">估计null值数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">5</div>
-                        <div class="stat-label">估计总键数</div>
-                    </div>
-                </div>
+        <h3>📊 详细统计信息</h3>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">106014</div>
+            <div class="stat-label">估计数字数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">估计布尔值数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">估计null值数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">5</div>
+            <div class="stat-label">估计总键数</div>
+          </div>
+        </div>
 
-                <h3>⚡ 性能测试结果</h3>
-                <table class="performance-table">
-                    <thead>
-                        <tr>
-                            <th>块大小</th>
-                            <th>耗时 (ms)</th>
-                            <th>处理块数</th>
-                            <th>速度 (块/ms)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        
-                            <tr >
-                                <td>100</td>
-                                <td>874.1</td>
-                                <td>3141</td>
-                                <td>3.59</td>
-                            </tr>
-                        
-                            <tr >
-                                <td>500</td>
-                                <td>353.1</td>
-                                <td>629</td>
-                                <td>1.78</td>
-                            </tr>
-                        
-                            <tr >
-                                <td>1000</td>
-                                <td>58.09</td>
-                                <td>315</td>
-                                <td>5.42</td>
-                            </tr>
-                        
-                            <tr class="fastest">
-                                <td>2000</td>
-                                <td>27.29</td>
-                                <td>158</td>
-                                <td>5.79</td>
-                            </tr>
-                        
-                    </tbody>
-                </table>
+        <h3>⚡ 性能测试结果</h3>
+        <table class="performance-table">
+          <thead>
+            <tr>
+              <th>块大小</th>
+              <th>耗时 (ms)</th>
+              <th>处理块数</th>
+              <th>速度 (块/ms)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>100</td>
+              <td>874.1</td>
+              <td>3141</td>
+              <td>3.59</td>
+            </tr>
 
-                <h3>🎯 性能建议</h3>
-                <ul>
-                    <li><strong>最优块大小:</strong> 2000</li>
-                    <li><strong>最高处理速度:</strong> 5.79 块/ms</li>
-                </ul>
+            <tr>
+              <td>500</td>
+              <td>353.1</td>
+              <td>629</td>
+              <td>1.78</td>
+            </tr>
 
-                <h3>📦 分块分析</h3>
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">629</div>
-                        <div class="stat-label">总块数</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">4604</div>
-                        <div class="stat-label">平均块大小</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">307560</div>
-                        <div class="stat-label">最大块大小</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">45</div>
-                        <div class="stat-label">最小块大小</div>
-                    </div>
-                </div>
+            <tr>
+              <td>1000</td>
+              <td>58.09</td>
+              <td>315</td>
+              <td>5.42</td>
+            </tr>
 
-                <h3>🔍 示例块内容</h3>
-                
-                    <div class="sample-chunk">
-                        <strong>块 1 (大小: 571 字符):</strong><br>
-                        {
-  "items": [
-    {
-      "id": 1,
-      "name": "Item 1",
-      "value": 445.28187719705835,
-     
-                    </div>
-                
-                    <div class="sample-chunk">
-                        <strong>块 2 (大小: 761 字符):</strong><br>
-                        {
-        "category": "B",
-        "tags": [
-          "tag1",
-          "tag2",
-          "tag3"
-  
-                    </div>
-                
-                    <div class="sample-chunk">
-                        <strong>块 3 (大小: 858 字符):</strong><br>
-                        {
-      "id": 4,
-      "name": "Item 4",
-      "value": 269.3701049293524,
-      "timestamp": "2025-
-                    </div>
-                
+            <tr class="fastest">
+              <td>2000</td>
+              <td>27.29</td>
+              <td>158</td>
+              <td>5.79</td>
+            </tr>
+          </tbody>
+        </table>
 
-                <h3>📈 结构分析结果</h3>
-                
-                    <p><strong>根类型:</strong> root</p>
-                    <p><strong>分析状态:</strong> 成功</p>
-                
+        <h3>🎯 性能建议</h3>
+        <ul>
+          <li><strong>最优块大小:</strong> 2000</li>
+          <li><strong>最高处理速度:</strong> 5.79 块/ms</li>
+        </ul>
 
-            </div>
-        
-            <div class="file-section">
-                <h2>📁 openapi.json</h2>
+        <h3>📦 分块分析</h3>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">629</div>
+            <div class="stat-label">总块数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">4604</div>
+            <div class="stat-label">平均块大小</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">307560</div>
+            <div class="stat-label">最大块大小</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">45</div>
+            <div class="stat-label">最小块大小</div>
+          </div>
+        </div>
 
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">0.22</div>
-                        <div class="stat-label">文件大小 (MB)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1958.12</div>
-                        <div class="stat-label">分析耗时 (ms)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1</div>
-                        <div class="stat-label">估计对象数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">146</div>
-                        <div class="stat-label">估计数组数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">337420</div>
-                        <div class="stat-label">估计字符串数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">733</div>
-                        <div class="stat-label">最大深度</div>
-                    </div>
-                </div>
+        <h3>🔍 示例块内容</h3>
 
-                <h3>📊 详细统计信息</h3>
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">15861</div>
-                        <div class="stat-label">估计数字数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">5324</div>
-                        <div class="stat-label">估计布尔值数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">3093</div>
-                        <div class="stat-label">估计null值数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">5</div>
-                        <div class="stat-label">估计总键数</div>
-                    </div>
-                </div>
+        <div class="sample-chunk">
+          <strong>块 1 (大小: 571 字符):</strong><br>
+          { "items": [ { "id": 1, "name": "Item 1", "value": 445.28187719705835,
+        </div>
 
-                <h3>⚡ 性能测试结果</h3>
-                <table class="performance-table">
-                    <thead>
-                        <tr>
-                            <th>块大小</th>
-                            <th>耗时 (ms)</th>
-                            <th>处理块数</th>
-                            <th>速度 (块/ms)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        
-                            <tr >
-                                <td>100</td>
-                                <td>1052.42</td>
-                                <td>2226</td>
-                                <td>2.12</td>
-                            </tr>
-                        
-                            <tr >
-                                <td>500</td>
-                                <td>83.21</td>
-                                <td>446</td>
-                                <td>5.36</td>
-                            </tr>
-                        
-                            <tr class="fastest">
-                                <td>1000</td>
-                                <td>34.11</td>
-                                <td>223</td>
-                                <td>6.54</td>
-                            </tr>
-                        
-                            <tr >
-                                <td>2000</td>
-                                <td>18.2</td>
-                                <td>112</td>
-                                <td>6.15</td>
-                            </tr>
-                        
-                    </tbody>
-                </table>
+        <div class="sample-chunk">
+          <strong>块 2 (大小: 761 字符):</strong><br>
+          { "category": "B", "tags": [ "tag1", "tag2", "tag3"
+        </div>
 
-                <h3>🎯 性能建议</h3>
-                <ul>
-                    <li><strong>最优块大小:</strong> 1000</li>
-                    <li><strong>最高处理速度:</strong> 6.54 块/ms</li>
-                </ul>
+        <div class="sample-chunk">
+          <strong>块 3 (大小: 858 字符):</strong><br>
+          { "id": 4, "name": "Item 4", "value": 269.3701049293524, "timestamp":
+          "2025-
+        </div>
 
-                <h3>📦 分块分析</h3>
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">446</div>
-                        <div class="stat-label">总块数</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">8260</div>
-                        <div class="stat-label">平均块大小</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">155537</div>
-                        <div class="stat-label">最大块大小</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">35</div>
-                        <div class="stat-label">最小块大小</div>
-                    </div>
-                </div>
+        <h3>📈 结构分析结果</h3>
 
-                <h3>🔍 示例块内容</h3>
-                
-                    <div class="sample-chunk">
-                        <strong>块 1 (大小: 599 字符):</strong><br>
-                        {"openapi":"3.1.0","info":{"title":"装备健康监测与智能维护平台","version":"1.0.0"},"paths":{"/__radar/api/request
-                    </div>
-                
-                    <div class="sample-chunk">
-                        <strong>块 2 (大小: 500 字符):</strong><br>
-                        ery","required":false,"schema":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Status Code"}}
-                    </div>
-                
-                    <div class="sample-chunk">
-                        <strong>块 3 (大小: 669 字符):</strong><br>
-                        {"$ref":"#/components/schemas/RequestSummary"},"title":"Response Get Requests   Radar Api Requests G
-                    </div>
-                
+        <p><strong>根类型:</strong> root</p>
+        <p><strong>分析状态:</strong> 成功</p>
+      </div>
 
-                <h3>📈 结构分析结果</h3>
-                
-                    <p><strong>根类型:</strong> root</p>
-                    <p><strong>分析状态:</strong> 成功</p>
-                
+      <div class="file-section">
+        <h2>📁 openapi.json</h2>
 
-            </div>
-        
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">0.22</div>
+            <div class="stat-label">文件大小 (MB)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1958.12</div>
+            <div class="stat-label">分析耗时 (ms)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1</div>
+            <div class="stat-label">估计对象数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">146</div>
+            <div class="stat-label">估计数组数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">337420</div>
+            <div class="stat-label">估计字符串数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">733</div>
+            <div class="stat-label">最大深度</div>
+          </div>
+        </div>
+
+        <h3>📊 详细统计信息</h3>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">15861</div>
+            <div class="stat-label">估计数字数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">5324</div>
+            <div class="stat-label">估计布尔值数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">3093</div>
+            <div class="stat-label">估计null值数量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">5</div>
+            <div class="stat-label">估计总键数</div>
+          </div>
+        </div>
+
+        <h3>⚡ 性能测试结果</h3>
+        <table class="performance-table">
+          <thead>
+            <tr>
+              <th>块大小</th>
+              <th>耗时 (ms)</th>
+              <th>处理块数</th>
+              <th>速度 (块/ms)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>100</td>
+              <td>1052.42</td>
+              <td>2226</td>
+              <td>2.12</td>
+            </tr>
+
+            <tr>
+              <td>500</td>
+              <td>83.21</td>
+              <td>446</td>
+              <td>5.36</td>
+            </tr>
+
+            <tr class="fastest">
+              <td>1000</td>
+              <td>34.11</td>
+              <td>223</td>
+              <td>6.54</td>
+            </tr>
+
+            <tr>
+              <td>2000</td>
+              <td>18.2</td>
+              <td>112</td>
+              <td>6.15</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>🎯 性能建议</h3>
+        <ul>
+          <li><strong>最优块大小:</strong> 1000</li>
+          <li><strong>最高处理速度:</strong> 6.54 块/ms</li>
+        </ul>
+
+        <h3>📦 分块分析</h3>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">446</div>
+            <div class="stat-label">总块数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">8260</div>
+            <div class="stat-label">平均块大小</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">155537</div>
+            <div class="stat-label">最大块大小</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">35</div>
+            <div class="stat-label">最小块大小</div>
+          </div>
+        </div>
+
+        <h3>🔍 示例块内容</h3>
+
+        <div class="sample-chunk">
+          <strong>块 1 (大小: 599 字符):</strong><br>
+          {"openapi":"3.1.0","info":{"title":"装备健康监测与智能维护平台","version":"1.0.0"},"paths":{"/__radar/api/request
+        </div>
+
+        <div class="sample-chunk">
+          <strong>块 2 (大小: 500 字符):</strong><br>
+          ery","required":false,"schema":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Status
+          Code"}}
+        </div>
+
+        <div class="sample-chunk">
+          <strong>块 3 (大小: 669 字符):</strong><br>
+          {"$ref":"#/components/schemas/RequestSummary"},"title":"Response Get
+          Requests Radar Api Requests G
+        </div>
+
+        <h3>📈 结构分析结果</h3>
+
+        <p><strong>根类型:</strong> root</p>
+        <p><strong>分析状态:</strong> 成功</p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

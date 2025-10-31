@@ -18,7 +18,7 @@ export default class MarkdownReportGenerator {
       const fileSizeInKB = (stats.size / 1024).toFixed(2);
 
       // 3. 读取文件前部分进行分析
-      const content = await fs.readFile(filePath, 'utf8');
+      const content = await fs.readFile(filePath, "utf8");
       // 增加到前50KB，这样可以获得更完整的结构信息
       const first50KB = content.substring(0, 50000);
 
@@ -31,13 +31,15 @@ export default class MarkdownReportGenerator {
           topLevelKeys: partialData.topLevelKeys,
           topLevelKeyCount: partialData.topLevelKeys.length,
           parseMethod: partialData.method,
-          sampleStructure: partialData.success ? this.analyzeSampleStructure(partialData.data) : null
+          sampleStructure: partialData.success
+            ? this.analyzeSampleStructure(partialData.data)
+            : null,
         };
       } catch (e) {
         structureAnalysis = {
           error: `JSON解析失败: ${e.message}`,
           parseMethod: "错误",
-          partialContent: first5KB.substring(0, 200) + "..."
+          partialContent: first5KB.substring(0, 200) + "...",
         };
       }
 
@@ -46,15 +48,17 @@ export default class MarkdownReportGenerator {
         basicInfo: {
           fileName: filePath,
           fileSize: `${fileSizeInKB} KB`,
-          generatedAt: new Date().toISOString()
+          generatedAt: new Date().toISOString(),
         },
         jsonAnalyzerReport: jsonAnalyzerReport,
         chunkAnalysis: chunkAnalysisData,
-        structureAnalysis: structureAnalysis
+        structureAnalysis: structureAnalysis,
       });
 
       // 6. 保存报告
-      const reportFileName = `analysis-report-${filePath.replace(/\.\w+$/, '').replace(/^\.\//, '')}.md`;
+      const reportFileName = `analysis-report-${
+        filePath.replace(/\.\w+$/, "").replace(/^\.\//, "")
+      }.md`;
       await fs.writeFile(reportFileName, report);
       console.log(`报告已生成: ${reportFileName}`);
 
@@ -68,7 +72,7 @@ export default class MarkdownReportGenerator {
   async getJsonAnalyzerReport(filePath) {
     // 使用 json-analyzer.js 的逻辑
     const stats = await fs.stat(filePath);
-    const content = await fs.readFile(filePath, 'utf8');
+    const content = await fs.readFile(filePath, "utf8");
     const data = JSON.parse(content);
 
     const analyzer = {
@@ -84,41 +88,42 @@ export default class MarkdownReportGenerator {
         topLevelKeys: Object.keys(data),
         tableAnalysis: {},
         largestTables: [],
-        complexityMetrics: {}
-      }
+        complexityMetrics: {},
+      },
     };
 
     // 递归分析数据结构
-    this.analyzeStructureForReport(data, 'root', analyzer.stats);
+    this.analyzeStructureForReport(data, "root", analyzer.stats);
 
     // 计算复杂度
     analyzer.stats.complexityMetrics = {
       depth: this.calculateDepth(data),
       breadth: analyzer.stats.rootKeys,
-      density: (analyzer.stats.objects + analyzer.stats.arrays) / (analyzer.stats.totalSize / 1024),
-      nestingLevel: this.calculateMaxNesting(data)
+      density: (analyzer.stats.objects + analyzer.stats.arrays) /
+        (analyzer.stats.totalSize / 1024),
+      nestingLevel: this.calculateMaxNesting(data),
     };
 
     return analyzer.stats;
   }
 
-  analyzeStructureForReport(obj, path = '', stats) {
+  analyzeStructureForReport(obj, path = "", stats) {
     if (obj === null) {
       stats.nulls++;
       return;
     }
 
-    if (typeof obj === 'string') {
+    if (typeof obj === "string") {
       stats.strings++;
       return;
     }
 
-    if (typeof obj === 'number') {
+    if (typeof obj === "number") {
       stats.numbers++;
       return;
     }
 
-    if (typeof obj === 'boolean') {
+    if (typeof obj === "boolean") {
       stats.booleans++;
       return;
     }
@@ -131,22 +136,22 @@ export default class MarkdownReportGenerator {
       return;
     }
 
-    if (typeof obj === 'object') {
+    if (typeof obj === "object") {
       stats.objects++;
-      Object.keys(obj).forEach(key => {
+      Object.keys(obj).forEach((key) => {
         this.analyzeStructureForReport(obj[key], `${path}.${key}`, stats);
       });
     }
   }
 
   calculateDepth(obj, currentDepth = 0) {
-    if (obj === null || typeof obj !== 'object') {
+    if (obj === null || typeof obj !== "object") {
       return currentDepth;
     }
 
     let maxDepth = currentDepth;
-    Object.values(obj).forEach(value => {
-      if (typeof value === 'object' && value !== null) {
+    Object.values(obj).forEach((value) => {
+      if (typeof value === "object" && value !== null) {
         const depth = this.calculateDepth(value, currentDepth + 1);
         maxDepth = Math.max(maxDepth, depth);
       }
@@ -155,15 +160,19 @@ export default class MarkdownReportGenerator {
     return maxDepth;
   }
 
-  calculateMaxNesting(obj, currentLevel = 0, path = '') {
-    if (obj === null || typeof obj !== 'object') {
+  calculateMaxNesting(obj, currentLevel = 0, path = "") {
+    if (obj === null || typeof obj !== "object") {
       return currentLevel;
     }
 
     let maxLevel = currentLevel;
     Object.entries(obj).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        const level = this.calculateMaxNesting(value, currentLevel + 1, `${path}.${key}`);
+      if (typeof value === "object" && value !== null) {
+        const level = this.calculateMaxNesting(
+          value,
+          currentLevel + 1,
+          `${path}.${key}`,
+        );
         maxLevel = Math.max(maxLevel, level);
       }
     });
@@ -173,13 +182,13 @@ export default class MarkdownReportGenerator {
 
   parsePartialJSON(text) {
     // 查找JSON对象的开始位置
-    const firstObjStart = text.indexOf('{');
+    const firstObjStart = text.indexOf("{");
     let result = {
       topLevelKeys: [],
       success: false,
       method: "未解析",
       data: null,
-      failureReason: ""
+      failureReason: "",
     };
 
     try {
@@ -191,11 +200,13 @@ export default class MarkdownReportGenerator {
           success: true,
           method: "直接解析",
           data: data,
-          failureReason: ""
+          failureReason: "",
         };
         return result;
       } catch (e) {
-        result.failureReason += `直接解析失败: ${e.message.substring(0, 100)}... `;
+        result.failureReason += `直接解析失败: ${
+          e.message.substring(0, 100)
+        }... `;
       }
 
       // 方法2: 查找完整的JSON对象
@@ -205,9 +216,9 @@ export default class MarkdownReportGenerator {
 
         for (let i = firstObjStart; i < text.length; i++) {
           const char = text[i];
-          if (char === '{') {
+          if (char === "{") {
             braceCount++;
-          } else if (char === '}') {
+          } else if (char === "}") {
             braceCount--;
             if (braceCount === 0) {
               firstObjEnd = i + 1;
@@ -225,11 +236,13 @@ export default class MarkdownReportGenerator {
               success: true,
               method: "智能提取完整对象",
               data: data,
-              failureReason: ""
+              failureReason: "",
             };
             return result;
           } catch (e) {
-            result.failureReason += `完整对象解析失败: ${e.message.substring(0, 100)}... `;
+            result.failureReason += `完整对象解析失败: ${
+              e.message.substring(0, 100)
+            }... `;
           }
         } else {
           result.failureReason += "找不到完整对象结束位置 ";
@@ -248,12 +261,14 @@ export default class MarkdownReportGenerator {
             success: true,
             method: "平衡JSON结构解析",
             data: data,
-            failureReason: ""
+            failureReason: "",
           };
           return result;
         }
       } catch (e) {
-        result.failureReason += `平衡JSON解析失败: ${e.message.substring(0, 100)}... `;
+        result.failureReason += `平衡JSON解析失败: ${
+          e.message.substring(0, 100)
+        }... `;
       }
 
       // 方法4: 提取第一个对象的键名（使用正则表达式）
@@ -263,25 +278,28 @@ export default class MarkdownReportGenerator {
           // 查找第一个双引号包围的键名
           const keyMatches = remainingText.match(/"([^"]+)"/g);
           if (keyMatches && keyMatches.length > 0) {
-            const extractedKeys = keyMatches.slice(0, 20).map(key => key.replace(/"/g, ''));
+            const extractedKeys = keyMatches.slice(0, 20).map((key) =>
+              key.replace(/"/g, "")
+            );
             result = {
               topLevelKeys: extractedKeys,
               success: true,
               method: "正则表达式键名提取",
               data: null,
-              failureReason: ""
+              failureReason: "",
             };
             return result;
           }
         } catch (e) {
-          result.failureReason += `键名提取失败: ${e.message.substring(0, 100)}... `;
+          result.failureReason += `键名提取失败: ${
+            e.message.substring(0, 100)
+          }... `;
         }
       }
 
       // 所有方法都失败，返回详细的失败信息
       result.method = "部分解析失败 - 建议使用完整分析方法";
       return result;
-
     } catch (error) {
       result.method = `解析错误: ${error.message.substring(0, 100)}...`;
       return result;
@@ -292,22 +310,29 @@ export default class MarkdownReportGenerator {
     const sample = {};
     const maxKeys = 10;
 
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       return {};
     }
 
-    Object.keys(data).slice(0, maxKeys).forEach(key => {
+    Object.keys(data).slice(0, maxKeys).forEach((key) => {
       const value = data[key];
-      if (typeof value === 'object' && value !== null) {
+      if (typeof value === "object" && value !== null) {
         sample[key] = {
-          type: Array.isArray(value) ? 'array' : 'object',
-          itemCount: Array.isArray(value) ? value.length : Object.keys(value).length,
-          sampleKeys: Array.isArray(value) ? [] : Object.keys(value).slice(0, 5)
+          type: Array.isArray(value) ? "array" : "object",
+          itemCount: Array.isArray(value)
+            ? value.length
+            : Object.keys(value).length,
+          sampleKeys: Array.isArray(value)
+            ? []
+            : Object.keys(value).slice(0, 5),
         };
       } else {
         sample[key] = {
           type: typeof value,
-          value: value !== null && value !== undefined ? value.toString().substring(0, 100) + (value.toString().length > 100 ? '...' : '') : 'null'
+          value: value !== null && value !== undefined
+            ? value.toString().substring(0, 100) +
+              (value.toString().length > 100 ? "..." : "")
+            : "null",
         };
       }
     });
@@ -324,10 +349,10 @@ export default class MarkdownReportGenerator {
     // 查找JSON开始位置
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      if (char === '{' || char === '[') {
+      if (char === "{" || char === "[") {
         startIdx = i;
-        braceCount = char === '{' ? 1 : 0;
-        bracketCount = char === '[' ? 1 : 0;
+        braceCount = char === "{" ? 1 : 0;
+        bracketCount = char === "[" ? 1 : 0;
         break;
       }
     }
@@ -337,13 +362,13 @@ export default class MarkdownReportGenerator {
     // 查找对应的结束位置
     for (let i = startIdx + 1; i < text.length; i++) {
       const char = text[i];
-      if (char === '{') {
+      if (char === "{") {
         braceCount++;
-      } else if (char === '}') {
+      } else if (char === "}") {
         braceCount--;
-      } else if (char === '[') {
+      } else if (char === "[") {
         bracketCount++;
-      } else if (char === ']') {
+      } else if (char === "]") {
         bracketCount--;
       }
 
@@ -359,7 +384,8 @@ export default class MarkdownReportGenerator {
   }
 
   createMarkdownReport(filePath, data) {
-    const { basicInfo, jsonAnalyzerReport, chunkAnalysis, structureAnalysis } = data;
+    const { basicInfo, jsonAnalyzerReport, chunkAnalysis, structureAnalysis } =
+      data;
 
     return `# JSON 文件分析报告
 
@@ -389,14 +415,18 @@ export default class MarkdownReportGenerator {
 | 数字 (Numbers) | ${jsonAnalyzerReport.numbers.toLocaleString()} |
 | 布尔值 (Booleans) | ${jsonAnalyzerReport.booleans.toLocaleString()} |
 | 空值 (Nulls) | ${jsonAnalyzerReport.nulls.toLocaleString()} |
-| **总计** | **${(jsonAnalyzerReport.objects + jsonAnalyzerReport.arrays + jsonAnalyzerReport.strings + jsonAnalyzerReport.numbers + jsonAnalyzerReport.booleans + jsonAnalyzerReport.nulls).toLocaleString()}** |
+| **总计** | **${
+      (jsonAnalyzerReport.objects + jsonAnalyzerReport.arrays +
+        jsonAnalyzerReport.strings + jsonAnalyzerReport.numbers +
+        jsonAnalyzerReport.booleans + jsonAnalyzerReport.nulls).toLocaleString()
+    }** |
 
 ### 2.2 顶层结构
 
 **顶层键数量**: ${jsonAnalyzerReport.rootKeys}
 
 **顶层键列表**:
-${jsonAnalyzerReport.topLevelKeys.map(key => `- \`${key}\``).join('\n')}
+${jsonAnalyzerReport.topLevelKeys.map((key) => `- \`${key}\``).join("\n")}
 
 ### 2.3 复杂度指标
 
@@ -415,20 +445,26 @@ ${jsonAnalyzerReport.topLevelKeys.map(key => `- \`${key}\``).join('\n')}
 
 | 项目 | 数值 |
 |------|------|
-| 处理块数 | ${chunkAnalysis?.basicInfo?.totalChunks || 'N/A'} |
-| 有效JSON块数 | ${chunkAnalysis?.basicInfo?.validJSONChunks || 'N/A'} |
-| 处理字符数 | ${(chunkAnalysis?.basicInfo?.totalCharacters || 0).toLocaleString()} |
-| 验证成功率 | ${chunkAnalysis?.chunkValidation?.validationRate || 'N/A'} |
+| 处理块数 | ${chunkAnalysis?.basicInfo?.totalChunks || "N/A"} |
+| 有效JSON块数 | ${chunkAnalysis?.basicInfo?.validJSONChunks || "N/A"} |
+| 处理字符数 | ${
+      (chunkAnalysis?.basicInfo?.totalCharacters || 0).toLocaleString()
+    } |
+| 验证成功率 | ${chunkAnalysis?.chunkValidation?.validationRate || "N/A"} |
 
 ### 3.2 分块读取特点
 
-${chunkAnalysis?.error ? `
+${
+      chunkAnalysis?.error
+        ? `
 - **注意事项**: ${chunkAnalysis.error}
 - **分析限制**: 分块读取方法主要用于处理超大文件，对于完整结构分析存在局限性
-` : `
+`
+        : `
 - **处理状态**: 分块读取正常完成
 - **验证结果**: JSON片段验证成功
-`}
+`
+    }
 
 ### 3.3 分块读取优势
 
@@ -441,52 +477,88 @@ ${chunkAnalysis?.error ? `
 
 ## 4. 文件结构分析
 
-${structureAnalysis.error ? `
+${
+      structureAnalysis.error
+        ? `
 ### 4.1 结构分析限制
 
 - **分析结果**: ${structureAnalysis.error}
-- **解析方法**: ${structureAnalysis.parseMethod || '未知'}
+- **解析方法**: ${structureAnalysis.parseMethod || "未知"}
 - **原因**: JSON文件结构复杂或格式特殊，部分解析方法失败
 
-` : `
+`
+        : `
 ### 4.1 顶层结构详细信息
 
-**解析方法**: ${structureAnalysis.parseMethod || '直接解析'}
+**解析方法**: ${structureAnalysis.parseMethod || "直接解析"}
 
 **顶层键数量**: ${structureAnalysis.topLevelKeyCount}
 
-${structureAnalysis.sampleStructure && Object.keys(structureAnalysis.sampleStructure).length > 0 ? `
+${
+          structureAnalysis.sampleStructure &&
+            Object.keys(structureAnalysis.sampleStructure).length > 0
+            ? `
 **结构样本分析**:
-${Object.entries(structureAnalysis.sampleStructure).map(([key, info]) => `
+${
+              Object.entries(structureAnalysis.sampleStructure).map((
+                [key, info],
+              ) => `
 - **${key}**:
   - 类型: ${info.type}
-  - ${info.type === 'array' ? `数组长度: ${info.itemCount}` : info.type === 'object' ? `对象键数: ${info.itemCount}` : `值: ${info.value}`}
-  ${info.type === 'object' && info.sampleKeys && info.sampleKeys.length > 0 ? `  - 示例键: [${info.sampleKeys.map(k => `\`${k}\``).join(', ')}]` : ''}
-`).join('')}
-` : `
+  - ${
+                info.type === "array"
+                  ? `数组长度: ${info.itemCount}`
+                  : info.type === "object"
+                  ? `对象键数: ${info.itemCount}`
+                  : `值: ${info.value}`
+              }
+  ${
+                info.type === "object" && info.sampleKeys &&
+                  info.sampleKeys.length > 0
+                  ? `  - 示例键: [${
+                    info.sampleKeys.map((k) => `\`${k}\``).join(", ")
+                  }]`
+                  : ""
+              }
+`).join("")
+            }
+`
+            : `
 **注意**: 无法获取详细结构样本信息，可能是因为文件结构过于复杂或解析方法限制。
-`}
+`
+        }
 
 ### 4.2 解析方法说明
 
-${structureAnalysis.parseMethod === '直接解析' ? `
+${
+          structureAnalysis.parseMethod === "直接解析"
+            ? `
 - **直接解析**: 成功解析文件前5KB内容作为完整JSON对象
 - **优点**: 获得准确的顶层结构信息
-` : structureAnalysis.parseMethod === '智能提取完整对象' ? `
+`
+            : structureAnalysis.parseMethod === "智能提取完整对象"
+            ? `
 - **智能提取完整对象**: 通过算法提取第一个完整的JSON对象
 - **优点**: 即使文件内容较长也能准确获取结构
-` : structureAnalysis.parseMethod === '平衡JSON结构解析' ? `
+`
+            : structureAnalysis.parseMethod === "平衡JSON结构解析"
+            ? `
 - **平衡JSON结构解析**: 查找完整的JSON开始和结束标记
 - **优点**: 处理嵌套复杂的JSON结构
-` : structureAnalysis.parseMethod === '第一行对象解析' ? `
+`
+            : structureAnalysis.parseMethod === "第一行对象解析"
+            ? `
 - **第一行对象解析**: 提取第一个JSON对象的键
 - **优点**: 快速获取基本结构信息
-` : `
+`
+            : `
 - **解析方法**: ${structureAnalysis.parseMethod}
 - **说明**: 使用了高级解析算法来处理复杂的JSON结构
-`}
+`
+        }
 
-`}
+`
+    }
 
 ---
 
@@ -536,24 +608,29 @@ ${structureAnalysis.parseMethod === '直接解析' ? `
 
   async generateAllReports() {
     const files = [
-      './test-output.json',
-      './large-example.json',
-      './openapi.json'
+      "./test-output.json",
+      "./large-example.json",
+      "./openapi.json",
     ];
 
     // 读取分块分析结果
     let chunkAnalysisData = {};
     try {
-      chunkAnalysisData = JSON.parse(await fs.readFile('chunk-analysis-results.json', 'utf8'));
+      chunkAnalysisData = JSON.parse(
+        await fs.readFile("chunk-analysis-results.json", "utf8"),
+      );
     } catch (e) {
-      console.warn('无法读取分块分析结果，将生成基础报告');
+      console.warn("无法读取分块分析结果，将生成基础报告");
     }
 
     const reportFiles = [];
 
     for (const filePath of files) {
       try {
-        const reportFile = await this.generateFileReport(filePath, chunkAnalysisData[filePath]);
+        const reportFile = await this.generateFileReport(
+          filePath,
+          chunkAnalysisData[filePath],
+        );
         if (reportFile) {
           reportFiles.push(reportFile);
         }
@@ -563,7 +640,7 @@ ${structureAnalysis.parseMethod === '直接解析' ? `
     }
 
     console.log(`\n成功生成 ${reportFiles.length} 个分析报告:`);
-    reportFiles.forEach(file => console.log(`- ${file}`));
+    reportFiles.forEach((file) => console.log(`- ${file}`));
 
     return reportFiles;
   }

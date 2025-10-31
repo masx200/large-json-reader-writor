@@ -22,13 +22,20 @@ export default class ChunkBasedAnalyzer {
       let totalCharacters = 0;
       let sampleChunks = [];
 
-      for await (const { chunk, progress: chunkProgress, position } of this.handler.readJSONInChunks(filePath, {
-        chunkSize: 1000, // 1KB chunks
-        progressCallback: (pos, total) => {
-          const currentProgress = Math.round((pos / total) * 100);
-          console.log(`处理进度: ${currentProgress}% (${(pos / 1024).toFixed(2)} KB / ${(total / 1024).toFixed(2)} KB)`);
-        }
-      })) {
+      for await (
+        const { chunk, progress: chunkProgress, position } of this.handler
+          .readJSONInChunks(filePath, {
+            chunkSize: 1000, // 1KB chunks
+            progressCallback: (pos, total) => {
+              const currentProgress = Math.round((pos / total) * 100);
+              console.log(
+                `处理进度: ${currentProgress}% (${
+                  (pos / 1024).toFixed(2)
+                } KB / ${(total / 1024).toFixed(2)} KB)`,
+              );
+            },
+          })
+      ) {
         totalChunks++;
         totalCharacters += chunk.length;
 
@@ -41,9 +48,10 @@ export default class ChunkBasedAnalyzer {
             try {
               const parsed = JSON.parse(chunk);
               sampleChunks.push({
-                chunk: chunk.substring(0, 200) + (chunk.length > 200 ? '...' : ''),
+                chunk: chunk.substring(0, 200) +
+                  (chunk.length > 200 ? "..." : ""),
                 type: this.getDataType(parsed),
-                keys: Object.keys(parsed).slice(0, 5)
+                keys: Object.keys(parsed).slice(0, 5),
               });
             } catch (e) {
               // 忽略解析错误
@@ -59,11 +67,11 @@ export default class ChunkBasedAnalyzer {
       }
 
       // 读取文件的前几KB来分析顶层结构
-      const content = await fs.readFile(filePath, 'utf8');
+      const content = await fs.readFile(filePath, "utf8");
       const first10KB = content.substring(0, 10000);
 
       // 智能查找完整的JSON对象起始和结束位置
-      const firstObjStart = first10KB.indexOf('{');
+      const firstObjStart = first10KB.indexOf("{");
       let topLevelKeys = [];
       let parseError = null;
 
@@ -75,9 +83,9 @@ export default class ChunkBasedAnalyzer {
 
           for (let i = firstObjStart; i < first10KB.length; i++) {
             const char = first10KB[i];
-            if (char === '{') {
+            if (char === "{") {
               braceCount++;
-            } else if (char === '}') {
+            } else if (char === "}") {
               braceCount--;
               if (braceCount === 0) {
                 firstObjEnd = i + 1;
@@ -110,20 +118,24 @@ export default class ChunkBasedAnalyzer {
             fileSize: `${fileSizeInKB} KB`,
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
-            totalCharacters: totalCharacters
+            totalCharacters: totalCharacters,
           },
           structure: {
             topLevelKeys: topLevelKeys,
             topLevelKeyCount: topLevelKeys.length,
-            partialSuccess: topLevelKeys.length > 0
+            partialSuccess: topLevelKeys.length > 0,
           },
           sampleChunks: sampleChunks,
           chunkValidation: {
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
-            validationRate: totalChunks > 0 ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + '%' : '0%'
+            validationRate: totalChunks > 0
+              ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + "%"
+              : "0%",
           },
-          analysisStatus: topLevelKeys.length > 0 ? "部分结构分析成功" : "仅完成基础文件分析"
+          analysisStatus: topLevelKeys.length > 0
+            ? "部分结构分析成功"
+            : "仅完成基础文件分析",
         };
       } catch (error) {
         parseError = error.message;
@@ -134,37 +146,38 @@ export default class ChunkBasedAnalyzer {
             fileSize: `${fileSizeInKB} KB`,
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
-            totalCharacters: totalCharacters
+            totalCharacters: totalCharacters,
           },
           structure: {
             topLevelKeys: [],
             topLevelKeyCount: 0,
-            partialSuccess: false
+            partialSuccess: false,
           },
           error: `结构分析失败: ${parseError}`,
           sampleChunks: sampleChunks,
           chunkValidation: {
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
-            validationRate: totalChunks > 0 ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + '%' : '0%'
+            validationRate: totalChunks > 0
+              ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + "%"
+              : "0%",
           },
-          analysisStatus: "仅完成基础文件分析"
+          analysisStatus: "仅完成基础文件分析",
         };
       }
-
     } catch (error) {
       console.error(`分块读取分析失败: ${error.message}`);
       return {
         method: "分块读取方法",
         file: filePath,
-        error: error.message
+        error: error.message,
       };
     }
   }
 
   getDataType(data) {
-    if (Array.isArray(data)) return 'array';
-    if (data === null) return 'null';
+    if (Array.isArray(data)) return "array";
+    if (data === null) return "null";
     return typeof data;
   }
 
@@ -180,10 +193,10 @@ export default class ChunkBasedAnalyzer {
     // 查找JSON开始位置
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      if (char === '{' || char === '[') {
+      if (char === "{" || char === "[") {
         startIdx = i;
-        braceCount = char === '{' ? 1 : 0;
-        bracketCount = char === '[' ? 1 : 0;
+        braceCount = char === "{" ? 1 : 0;
+        bracketCount = char === "[" ? 1 : 0;
         break;
       }
     }
@@ -193,13 +206,13 @@ export default class ChunkBasedAnalyzer {
     // 查找对应的结束位置
     for (let i = startIdx + 1; i < text.length; i++) {
       const char = text[i];
-      if (char === '{') {
+      if (char === "{") {
         braceCount++;
-      } else if (char === '}') {
+      } else if (char === "}") {
         braceCount--;
-      } else if (char === '[') {
+      } else if (char === "[") {
         bracketCount++;
-      } else if (char === ']') {
+      } else if (char === "]") {
         bracketCount--;
       }
 
@@ -232,32 +245,38 @@ if (import.meta.main) {
     const analyzer = new ChunkBasedAnalyzer();
 
     const filesToAnalyze = [
-      './test-output.json',
-      './large-example.json',
-      './openapi.json'
+      "./test-output.json",
+      "./large-example.json",
+      "./openapi.json",
     ];
 
     try {
       const results = await analyzer.analyzeMultipleFiles(filesToAnalyze);
 
       // 保存结果
-      await fs.writeFile('chunk-analysis-results.json', JSON.stringify(results, null, 2));
-      console.log('\n分块分析结果已保存到: chunk-analysis-results.json');
+      await fs.writeFile(
+        "chunk-analysis-results.json",
+        JSON.stringify(results, null, 2),
+      );
+      console.log("\n分块分析结果已保存到: chunk-analysis-results.json");
 
       // 打印摘要
-      console.log('\n=== 分块读取分析摘要 ===');
+      console.log("\n=== 分块读取分析摘要 ===");
       Object.entries(results).forEach(([file, result]) => {
         console.log(`\n文件: ${file}`);
-        console.log(`大小: ${result.basicInfo?.fileSize || 'N/A'}`);
-        console.log(`顶层键数量: ${result.structure?.topLevelKeyCount || 'N/A'}`);
-        console.log(`分块验证率: ${result.chunkValidation?.validationRate || 'N/A'}`);
+        console.log(`大小: ${result.basicInfo?.fileSize || "N/A"}`);
+        console.log(
+          `顶层键数量: ${result.structure?.topLevelKeyCount || "N/A"}`,
+        );
+        console.log(
+          `分块验证率: ${result.chunkValidation?.validationRate || "N/A"}`,
+        );
         if (result.error) {
           console.log(`错误: ${result.error}`);
         }
       });
-
     } catch (error) {
-      console.error('分析失败:', error);
+      console.error("分析失败:", error);
     }
   }
 

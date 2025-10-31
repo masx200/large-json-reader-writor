@@ -159,9 +159,11 @@ export default class LargeJSONHandler {
 
         const progress = Math.round((position / totalLength) * 100);
         console.log(
-          `写入进度: ${progress}% (${(position / 1024 / 1024).toFixed(
-            2
-          )} MB / ${(totalLength / 1024 / 1024).toFixed(2)} MB)`
+          `写入进度: ${progress}% (${
+            (position / 1024 / 1024).toFixed(
+              2,
+            )
+          } MB / ${(totalLength / 1024 / 1024).toFixed(2)} MB)`,
         );
 
         // 添加延迟，避免过快的写入
@@ -265,24 +267,26 @@ if (import.meta.main) {
       // 下载文件
       await jsonHandler.downloadJSON(
         "http://localhost:8000/openapi.json",
-        "./openapi.json"
+        "./openapi.json",
       );
 
       // 读取文件（示例）
       console.log("\n开始分块读取文件:");
-      for await (const {
-        chunk,
-        position,
-        progress,
-      } of jsonHandler.readJSONInChunks("./openapi.json", {
-        chunkSize: 500,
-        pretty: true,
-        progressCallback: (pos, total) => {
-          console.log(`读取进度: ${Math.round((pos / total) * 100)}%`);
-        },
-      })) {
+      for await (
+        const {
+          chunk,
+          position,
+          progress,
+        } of jsonHandler.readJSONInChunks("./openapi.json", {
+          chunkSize: 500,
+          pretty: true,
+          progressCallback: (pos, total) => {
+            console.log(`读取进度: ${Math.round((pos / total) * 100)}%`);
+          },
+        })
+      ) {
         console.log(
-          `\n--- 块 ${progress}% (${position}-${position + chunk.length}) ---`
+          `\n--- 块 ${progress}% (${position}-${position + chunk.length}) ---`,
         );
         console.log(chunk);
 

@@ -6,13 +6,13 @@ let streamChain, streamJson, streamValues;
 // 在模块级别初始化流式JSON模块
 async function initializeStreamModules() {
   try {
-    streamChain = await import('stream-chain');
-    streamJson = await import('stream-json');
-    streamValues = await import('stream-json/streamers/StreamValues.js');
+    streamChain = await import("stream-chain");
+    streamJson = await import("stream-json");
+    streamValues = await import("stream-json/streamers/StreamValues.js");
 
     return { success: true };
   } catch (error) {
-    console.error('导入模块失败:', error);
+    console.error("导入模块失败:", error);
     return { success: false, error };
   }
 }
@@ -31,10 +31,10 @@ export default class StreamJSONParser {
         strings: 0,
         numbers: 0,
         booleans: 0,
-        nulls: 0
+        nulls: 0,
       },
       paths: [],
-      deepPaths: []
+      deepPaths: [],
     };
   }
 
@@ -60,7 +60,7 @@ export default class StreamJSONParser {
     const {
       chunkSize = 1024 * 20, // 20KB chunks
       maxPaths = 1000,
-      progressCallback = null
+      progressCallback = null,
     } = options;
 
     console.log(`开始stream-json流式解析: ${filePath}`);
@@ -79,14 +79,14 @@ export default class StreamJSONParser {
       const pipeline = streamChain.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
         streamJson.parser(),
-        new streamValues.default() // 流式输出值
+        new streamValues.default(), // 流式输出值
       ]);
 
       const topLevelKeys = new Set();
       const structure = {};
       let maxDepth = 0;
 
-      pipeline.on('data', (data) => {
+      pipeline.on("data", (data) => {
         processedSize += JSON.stringify(data).length;
         objectCount++;
 
@@ -103,7 +103,7 @@ export default class StreamJSONParser {
         }
       });
 
-      pipeline.on('end', () => {
+      pipeline.on("end", () => {
         console.log(`✅ stream-json解析完成! 处理了 ${objectCount} 个值`);
         console.log(`🔑 发现顶层键: ${topLevelKeys.size}`);
 
@@ -117,26 +117,27 @@ export default class StreamJSONParser {
             topLevelKeyCount: topLevelKeys.size,
             totalElements: objectCount,
             maxDepth: maxDepth,
-            typeDistribution: { ...this.results.typeCounts }
+            typeDistribution: { ...this.results.typeCounts },
           },
           complexity: {
             depth: maxDepth,
             breadth: topLevelKeys.size,
-            density: (this.results.typeCounts.objects + this.results.typeCounts.arrays) / (totalSize / 1024)
-          }
+            density: (this.results.typeCounts.objects +
+              this.results.typeCounts.arrays) / (totalSize / 1024),
+          },
         };
 
         resolve(result);
       });
 
-      pipeline.on('error', (error) => {
-        console.error('❌ stream-json解析错误:', error);
+      pipeline.on("error", (error) => {
+        console.error("❌ stream-json解析错误:", error);
         resolve({
           success: false,
           method: "stream-json流式解析",
           error: error.message,
           topLevelKeys: [],
-          structure: {}
+          structure: {},
         });
       });
     });
@@ -147,9 +148,9 @@ export default class StreamJSONParser {
    */
   async parseArrayContent(filePath, options = {}) {
     const {
-      targetArray = 'items', // 目标数组名称
+      targetArray = "items", // 目标数组名称
       maxElements = 1000,
-      progressCallback = null
+      progressCallback = null,
     } = options;
 
     console.log(`开始数组内容解析: ${filePath} -> ${targetArray}`);
@@ -166,14 +167,14 @@ export default class StreamJSONParser {
         const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
           streamJson.parser(),
-          new streamValues.default()
+          new streamValues.default(),
         ]);
 
         const arrayElements = [];
         let elementCount = 0;
         let processedSize = 0;
 
-        pipeline.on('data', (data) => {
+        pipeline.on("data", (data) => {
           processedSize += JSON.stringify(data).length;
           elementCount++;
 
@@ -184,7 +185,7 @@ export default class StreamJSONParser {
               arrayElements.push({
                 index: index,
                 data: element,
-                type: this.getElementType(element)
+                type: this.getElementType(element),
               });
 
               // 分析元素类型
@@ -198,7 +199,7 @@ export default class StreamJSONParser {
           }
         });
 
-        pipeline.on('end', () => {
+        pipeline.on("end", () => {
           console.log(`✅ 数组解析完成! 处理了 ${arrayElements.length} 个元素`);
 
           resolve({
@@ -209,19 +210,18 @@ export default class StreamJSONParser {
             stats: {
               fileSizeKB: (totalSize / 1024).toFixed(2),
               totalElements: arrayElements.length,
-              elementTypes: this.getElementTypeStats(arrayElements)
-            }
+              elementTypes: this.getElementTypeStats(arrayElements),
+            },
           });
         });
 
-        pipeline.on('error', reject);
+        pipeline.on("error", reject);
       });
-
     } catch (error) {
       return {
         success: false,
         method: "数组内容流式解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -233,7 +233,7 @@ export default class StreamJSONParser {
     const {
       targetPaths = [], // 目标路径数组，如 ['info.title', 'paths.*', 'components.*']
       maxDepth = 5,
-      maxResults = 500
+      maxResults = 500,
     } = options;
 
     console.log(`开始深度路径解析: ${filePath}`);
@@ -242,7 +242,7 @@ export default class StreamJSONParser {
     await this.initializeModules();
 
     try {
-      const pickModule = await import('stream-json/filters/Pick.js');
+      const pickModule = await import("stream-json/filters/Pick.js");
       const pick = pickModule.default.pick;
 
       const stats = fs.statSync(filePath);
@@ -254,13 +254,13 @@ export default class StreamJSONParser {
           fs.createReadStream(filePath),
           streamJson.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
-          new streamValues.default()
+          new streamValues.default(),
         ]);
 
         const deepPaths = [];
         let pathCount = 0;
 
-        pipeline.on('data', (data) => {
+        pipeline.on("data", (data) => {
           pathCount++;
 
           if (data && data.key && data.value !== undefined) {
@@ -268,7 +268,7 @@ export default class StreamJSONParser {
               path: data.key,
               value: this.getValuePreview(data.value),
               depth: this.calculatePathDepth(data.key),
-              type: typeof data.value
+              type: typeof data.value,
             });
           }
 
@@ -279,7 +279,7 @@ export default class StreamJSONParser {
           }
         });
 
-        pipeline.on('end', () => {
+        pipeline.on("end", () => {
           console.log(`✅ 深度路径解析完成! 发现 ${deepPaths.length} 个路径`);
 
           resolve({
@@ -289,21 +289,20 @@ export default class StreamJSONParser {
             stats: {
               fileSizeKB: (totalSize / 1024).toFixed(2),
               totalPaths: deepPaths.length,
-              maxDepthFound: Math.max(...deepPaths.map(p => p.depth)),
-              targetPaths: targetPaths.length
-            }
+              maxDepthFound: Math.max(...deepPaths.map((p) => p.depth)),
+              targetPaths: targetPaths.length,
+            },
           });
         });
 
-        pipeline.on('error', reject);
+        pipeline.on("error", reject);
       });
-
     } catch (error) {
-      console.error('深度路径解析失败:', error);
+      console.error("深度路径解析失败:", error);
       return {
         success: false,
         method: "深度路径流式解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -316,7 +315,7 @@ export default class StreamJSONParser {
       maxDepth = currentDepth;
     }
 
-    const simplePath = path.split('.')[0]; // 只取顶层路径
+    const simplePath = path.split(".")[0]; // 只取顶层路径
 
     if (!structure[simplePath]) {
       structure[simplePath] = this.getTypeInfo(value);
@@ -325,15 +324,15 @@ export default class StreamJSONParser {
     // 更新类型统计
     if (value === null) {
       this.results.typeCounts.nulls++;
-    } else if (typeof value === 'string') {
+    } else if (typeof value === "string") {
       this.results.typeCounts.strings++;
-    } else if (typeof value === 'number') {
+    } else if (typeof value === "number") {
       this.results.typeCounts.numbers++;
-    } else if (typeof value === 'boolean') {
+    } else if (typeof value === "boolean") {
       this.results.typeCounts.booleans++;
     } else if (Array.isArray(value)) {
       this.results.typeCounts.arrays++;
-    } else if (typeof value === 'object') {
+    } else if (typeof value === "object") {
       this.results.typeCounts.objects++;
     }
 
@@ -344,29 +343,31 @@ export default class StreamJSONParser {
    * 获取类型信息
    */
   getTypeInfo(value) {
-    if (value === null) return { type: 'null' };
-    if (typeof value === 'string') return {
-      type: 'string',
-      length: value.length,
-      sample: value.substring(0, 50) + (value.length > 50 ? '...' : '')
-    };
-    if (typeof value === 'number') return { type: 'number' };
-    if (typeof value === 'boolean') return { type: 'boolean' };
+    if (value === null) return { type: "null" };
+    if (typeof value === "string") {
+      return {
+        type: "string",
+        length: value.length,
+        sample: value.substring(0, 50) + (value.length > 50 ? "..." : ""),
+      };
+    }
+    if (typeof value === "number") return { type: "number" };
+    if (typeof value === "boolean") return { type: "boolean" };
     if (Array.isArray(value)) {
       return {
-        type: 'array',
+        type: "array",
         length: value.length,
-        elementTypes: this.getElementTypes(value)
+        elementTypes: this.getElementTypes(value),
       };
     }
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return {
-        type: 'object',
+        type: "object",
         properties: Object.keys(value).slice(0, 10),
-        propertyCount: Object.keys(value).length
+        propertyCount: Object.keys(value).length,
       };
     }
-    return { type: 'unknown' };
+    return { type: "unknown" };
   }
 
   /**
@@ -374,10 +375,12 @@ export default class StreamJSONParser {
    */
   getElementTypes(array) {
     const types = {};
-    array.forEach(item => {
-      const type = Array.isArray(item) ? 'array' :
-                    item === null ? 'null' :
-                    typeof item;
+    array.forEach((item) => {
+      const type = Array.isArray(item)
+        ? "array"
+        : item === null
+        ? "null"
+        : typeof item;
       types[type] = (types[type] || 0) + 1;
     });
     return types;
@@ -387,8 +390,8 @@ export default class StreamJSONParser {
    * 获取元素的类型
    */
   getElementType(element) {
-    if (element === null) return 'null';
-    if (Array.isArray(element)) return 'array';
+    if (element === null) return "null";
+    if (Array.isArray(element)) return "array";
     return typeof element;
   }
 
@@ -397,7 +400,7 @@ export default class StreamJSONParser {
    */
   getElementTypeStats(elements) {
     const types = {};
-    elements.forEach(element => {
+    elements.forEach((element) => {
       const type = element.type;
       types[type] = (types[type] || 0) + 1;
     });
@@ -408,12 +411,16 @@ export default class StreamJSONParser {
    * 获取值的预览
    */
   getValuePreview(value) {
-    if (value === null) return 'null';
-    if (typeof value === 'string') return value.substring(0, 50) + (value.length > 50 ? '...' : '');
-    if (typeof value === 'number') return value;
-    if (typeof value === 'boolean') return value;
+    if (value === null) return "null";
+    if (typeof value === "string") {
+      return value.substring(0, 50) + (value.length > 50 ? "..." : "");
+    }
+    if (typeof value === "number") return value;
+    if (typeof value === "boolean") return value;
     if (Array.isArray(value)) return `Array(${value.length})`;
-    if (typeof value === 'object') return `Object{${Object.keys(value).length}}`;
+    if (typeof value === "object") {
+      return `Object{${Object.keys(value).length}}`;
+    }
     return value;
   }
 
@@ -421,7 +428,8 @@ export default class StreamJSONParser {
    * 计算路径深度
    */
   calculatePathDepth(path) {
-    return (path.match(/\./g) || []).length + (path.match(/\[\d+\]/g) || []).length;
+    return (path.match(/\./g) || []).length +
+      (path.match(/\[\d+\]/g) || []).length;
   }
 
   /**
@@ -430,47 +438,51 @@ export default class StreamJSONParser {
   async smartParse(filePath, options = {}) {
     const {
       chunkSize = 1024 * 20,
-      targetArray = 'items',
+      targetArray = "items",
       targetPaths = [],
-      enableDeepAnalysis = true
+      enableDeepAnalysis = true,
     } = options;
 
     try {
       const stats = fs.statSync(filePath);
       const fileSizeKB = stats.size / 1024;
 
-      console.log(`🔍 开始智能JSON解析: ${filePath} (${fileSizeKB.toFixed(2)} KB)`);
+      console.log(
+        `🔍 开始智能JSON解析: ${filePath} (${fileSizeKB.toFixed(2)} KB)`,
+      );
 
       let results = {};
 
       // 1. 基础流式解析
-      console.log('📂 执行基础流式解析...');
+      console.log("📂 执行基础流式解析...");
       results.basic = await this.parseWithStreamJSON(filePath, {
         chunkSize,
         progressCallback: (processed, total, progress) => {
           console.log(`基础解析进度: ${progress}%`);
-        }
+        },
       });
 
       // 2. 数组内容解析（如果适用）
       if (targetArray && results.basic.success) {
-        console.log('📋 执行数组内容解析...');
+        console.log("📋 执行数组内容解析...");
         results.array = await this.parseArrayContent(filePath, {
           targetArray,
           maxElements: 100,
           progressCallback: (processed, total, progress) => {
             console.log(`数组解析进度: ${progress}%`);
-          }
+          },
         });
       }
 
       // 3. 深度路径解析（暂时禁用，由于Pick过滤器问题）
-      if (enableDeepAnalysis && results.basic.success && targetPaths.length > 0) {
-        console.log('🔍 深度路径解析暂时禁用（Pick过滤器修复中）...');
+      if (
+        enableDeepAnalysis && results.basic.success && targetPaths.length > 0
+      ) {
+        console.log("🔍 深度路径解析暂时禁用（Pick过滤器修复中）...");
         results.deepPaths = {
           success: false,
           method: "深度路径流式解析",
-          error: "Pick过滤器功能暂时禁用，正在修复中"
+          error: "Pick过滤器功能暂时禁用，正在修复中",
         };
       }
 
@@ -483,17 +495,16 @@ export default class StreamJSONParser {
           basicSuccess: results.basic.success,
           arraySuccess: results.array?.success || false,
           deepPathsSuccess: results.deepPaths?.success || false,
-          recommendedMethod: this.recommendMethod(fileSizeKB)
+          recommendedMethod: this.recommendMethod(fileSizeKB),
         },
-        parseTime: new Date().toISOString()
+        parseTime: new Date().toISOString(),
       };
-
     } catch (error) {
-      console.error('❌ 智能解析失败:', error);
+      console.error("❌ 智能解析失败:", error);
       return {
         success: false,
         method: "智能流式解析",
-        error: error.message
+        error: error.message,
       };
     }
   }

@@ -143,7 +143,7 @@ class InteractiveJSONBrowser {
 
       const structure = await this.browser.navigateToPath(
         this.currentFile,
-        this.currentPath
+        this.currentPath,
       );
       if (structure) {
         console.log(`\n📁 ${this.currentPath}:`);
@@ -180,7 +180,7 @@ class InteractiveJSONBrowser {
       // 验证路径是否存在
       const structure = await this.browser.navigateToPath(
         this.currentFile,
-        this.currentPath
+        this.currentPath,
       );
       if (!structure) {
         console.log(`路径不存在: ${targetPath}`);
@@ -213,7 +213,7 @@ class InteractiveJSONBrowser {
 
       const structure = await this.browser.navigateToPath(
         this.currentFile,
-        fullPath
+        fullPath,
       );
       if (structure) {
         console.log(`\n📄 ${fullPath}:`);
@@ -222,7 +222,7 @@ class InteractiveJSONBrowser {
         // 如果是简单类型，显示完整内容
         if (["string", "number", "boolean", "null"].includes(structure.type)) {
           console.log(
-            `\n💾 完整内容: ${JSON.stringify(structure.summary.value)}`
+            `\n💾 完整内容: ${JSON.stringify(structure.summary.value)}`,
           );
         }
       } else {
@@ -240,7 +240,7 @@ class InteractiveJSONBrowser {
     try {
       const structure = await this.browser.navigateToPath(
         this.currentFile,
-        this.currentPath
+        this.currentPath,
       );
       if (structure) {
         console.log(`\n📊 路径信息: ${this.currentPath || "/"}`);
@@ -251,7 +251,7 @@ class InteractiveJSONBrowser {
           console.log(
             `  键列表: ${structure.summary.keys.slice(0, 10).join(", ")}${
               structure.summary.keys.length > 10 ? "..." : ""
-            }`
+            }`,
           );
         } else if (structure.type === "array") {
           console.log(`  数组长度: ${structure.summary.length}`);
@@ -332,7 +332,7 @@ class InteractiveJSONBrowser {
             console.log(
               `${indent}  └── ... 还有 ${
                 structure.summary.keys.length - 5
-              } 个键`
+              } 个键`,
             );
           }
         }
@@ -340,14 +340,14 @@ class InteractiveJSONBrowser {
 
       case "array":
         console.log(
-          `${indent}📋 Array (${structure.summary.length} items, type: ${structure.summary.type})`
+          `${indent}📋 Array (${structure.summary.length} items, type: ${structure.summary.type})`,
         );
         structure.children.slice(0, 3).forEach((child, index) => {
           console.log(`${indent}  ├── [${index}] ${child.type}`);
         });
         if (structure.summary.length > 3) {
           console.log(
-            `${indent}  └── ... 还有 ${structure.summary.length - 3} 个元素`
+            `${indent}  └── ... 还有 ${structure.summary.length - 3} 个元素`,
           );
         }
         break;
@@ -356,7 +356,7 @@ class InteractiveJSONBrowser {
         console.log(
           `${indent}${structure.type}: ${
             structure.summary.display || structure.summary.value
-          }`
+          }`,
         );
     }
   }

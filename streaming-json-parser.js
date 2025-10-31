@@ -13,9 +13,9 @@ export default class StreamingJSONParser {
         strings: 0,
         numbers: 0,
         booleans: 0,
-        nulls: 0
+        nulls: 0,
       },
-      deepPaths: []
+      deepPaths: [],
     };
   }
 
@@ -27,7 +27,7 @@ export default class StreamingJSONParser {
       chunkSize = 1024 * 20, // 20KB
       maxDepth = 10,
       progressCallback = null,
-      maxSamples = 1000 // 最大采样数量
+      maxSamples = 1000, // 最大采样数量
     } = options;
 
     console.log(`开始流式解析: ${filePath}`);
@@ -40,10 +40,10 @@ export default class StreamingJSONParser {
       // 创建可读流
       const readStream = fs.createReadStream(filePath, {
         highWaterMark: chunkSize,
-        encoding: 'utf8'
+        encoding: "utf8",
       });
 
-      let buffer = '';
+      let buffer = "";
       let braceCount = 0;
       let bracketCount = 0;
       let inString = false;
@@ -52,9 +52,9 @@ export default class StreamingJSONParser {
 
       // 收集完整的JSON对象
       const jsonObjects = [];
-      let currentObject = '';
+      let currentObject = "";
 
-      readStream.on('data', (chunk) => {
+      readStream.on("data", (chunk) => {
         processedSize += chunk.length;
 
         // 更新进度
@@ -67,13 +67,13 @@ export default class StreamingJSONParser {
           const char = chunk[i];
 
           if (!inString) {
-            if (char === '{' && !escapeNext) {
+            if (char === "{" && !escapeNext) {
               if (braceCount === 0 && bracketCount === 0) {
                 // 开始新的JSON对象
                 currentObject = char;
               }
               braceCount++;
-            } else if (char === '}' && !escapeNext) {
+            } else if (char === "}" && !escapeNext) {
               braceCount--;
               if (braceCount === 0 && bracketCount === 0) {
                 // 完成一个JSON对象
@@ -81,14 +81,14 @@ export default class StreamingJSONParser {
                 if (currentObject.length > 2) { // 排除空对象 {}
                   jsonObjects.push(currentObject);
                 }
-                currentObject = '';
+                currentObject = "";
               } else {
                 currentObject += char;
               }
-            } else if (char === '[' && !escapeNext) {
+            } else if (char === "[" && !escapeNext) {
               bracketCount++;
               currentObject += char;
-            } else if (char === ']' && !escapeNext) {
+            } else if (char === "]" && !escapeNext) {
               bracketCount--;
               currentObject += char;
             } else {
@@ -103,7 +103,7 @@ export default class StreamingJSONParser {
             if (char === '"' && !escapeNext) {
               inString = false;
             }
-            if (char === '\\' && !escapeNext) {
+            if (char === "\\" && !escapeNext) {
               escapeNext = true;
             } else {
               escapeNext = false;
@@ -119,14 +119,14 @@ export default class StreamingJSONParser {
         }
       });
 
-      readStream.on('end', () => {
+      readStream.on("end", () => {
         console.log(`文件读取完成，收集到 ${jsonObjects.length} 个JSON对象`);
         this.processJSONObjects(jsonObjects);
         resolve(this.getResults());
       });
 
-      readStream.on('error', (error) => {
-        console.error('流读取错误:', error);
+      readStream.on("error", (error) => {
+        console.error("流读取错误:", error);
         reject(error);
       });
     });
@@ -145,11 +145,10 @@ export default class StreamingJSONParser {
         console.log(`成功解析对象，键数量: ${Object.keys(obj).length}`);
 
         // 分析顶层结构
-        Object.keys(obj).forEach(key => {
+        Object.keys(obj).forEach((key) => {
           topLevelKeys.add(key);
           this.analyzeValue(key, obj[key], structure, 0);
         });
-
       } catch (error) {
         console.log(`解析错误: ${error.message}`);
         // 忽略解析错误，继续处理其他对象
@@ -173,35 +172,35 @@ export default class StreamingJSONParser {
 
     if (!structure[path]) {
       structure[path] = {
-        type: 'unknown',
+        type: "unknown",
         count: 0,
-        samples: []
+        samples: [],
       };
     }
 
     structure[path].count++;
 
     if (value === null) {
-      structure[path].type = 'null';
+      structure[path].type = "null";
       this.results.typeCounts.nulls++;
       this.results.totalElements++;
-    } else if (typeof value === 'string') {
-      structure[path].type = 'string';
+    } else if (typeof value === "string") {
+      structure[path].type = "string";
       if (structure[path].samples.length < 5) {
         structure[path].samples.push(value.substring(0, 50));
       }
       this.results.typeCounts.strings++;
       this.results.totalElements++;
-    } else if (typeof value === 'number') {
-      structure[path].type = 'number';
+    } else if (typeof value === "number") {
+      structure[path].type = "number";
       this.results.typeCounts.numbers++;
       this.results.totalElements++;
-    } else if (typeof value === 'boolean') {
-      structure[path].type = 'boolean';
+    } else if (typeof value === "boolean") {
+      structure[path].type = "boolean";
       this.results.typeCounts.booleans++;
       this.results.totalElements++;
     } else if (Array.isArray(value)) {
-      structure[path].type = 'array';
+      structure[path].type = "array";
       structure[path].length = value.length;
       this.results.typeCounts.arrays++;
       this.results.totalElements++;
@@ -212,8 +211,8 @@ export default class StreamingJSONParser {
           this.analyzeValue(`${key}[${index}]`, item, structure, depth + 1);
         });
       }
-    } else if (typeof value === 'object') {
-      structure[path].type = 'object';
+    } else if (typeof value === "object") {
+      structure[path].type = "object";
       const keys = Object.keys(value);
       structure[path].properties = keys.slice(0, 10); // 只保存前10个属性
       structure[path].propertyCount = keys.length;
@@ -222,8 +221,13 @@ export default class StreamingJSONParser {
 
       // 递归分析子对象
       if (depth < 5) { // 限制递归深度
-        keys.forEach(subKey => {
-          this.analyzeValue(`${key}.${subKey}`, value[subKey], structure, depth + 1);
+        keys.forEach((subKey) => {
+          this.analyzeValue(
+            `${key}.${subKey}`,
+            value[subKey],
+            structure,
+            depth + 1,
+          );
         });
       }
     }
@@ -237,7 +241,7 @@ export default class StreamingJSONParser {
       chunkSize = 1024 * 20, // 20KB
       maxDepth = 5,
       targetPaths = [], // 指定要提取的路径
-      useSampling = true // 是否使用采样
+      useSampling = true, // 是否使用采样
     } = options;
 
     console.log(`开始深度解析: ${filePath}`);
@@ -248,7 +252,7 @@ export default class StreamingJSONParser {
       const fileSize = stats.size;
 
       // 读取整个文件（对于非常大的文件，这可能需要优化）
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // 提取深层路径
       const deepResults = this.extractDeepPaths(content, maxDepth, targetPaths);
@@ -263,15 +267,14 @@ export default class StreamingJSONParser {
           totalPaths: deepResults.paths.length,
           maxDepthFound: deepResults.maxDepth,
           targetPaths: targetPaths.length,
-          useSampling: useSampling
-        }
+          useSampling: useSampling,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         method: "深度解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -289,7 +292,7 @@ export default class StreamingJSONParser {
       const data = JSON.parse(content);
 
       // 递归提取路径
-      const extractPaths = (obj, currentPath = '', depth = 0) => {
+      const extractPaths = (obj, currentPath = "", depth = 0) => {
         if (depth > maxDepthFound) {
           maxDepthFound = depth;
         }
@@ -298,8 +301,8 @@ export default class StreamingJSONParser {
           return;
         }
 
-        if (typeof obj === 'object' && obj !== null) {
-          Object.keys(obj).forEach(key => {
+        if (typeof obj === "object" && obj !== null) {
+          Object.keys(obj).forEach((key) => {
             const path = currentPath ? `${currentPath}.${key}` : key;
             paths.push({ path, depth, key });
 
@@ -307,11 +310,11 @@ export default class StreamingJSONParser {
             if (!structure[path]) {
               structure[path] = {
                 type: typeof obj[key],
-                value: this.getValuePreview(obj[key])
+                value: this.getValuePreview(obj[key]),
               };
             }
 
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
+            if (typeof obj[key] === "object" && obj[key] !== null) {
               extractPaths(obj[key], path, depth + 1);
             }
           });
@@ -319,17 +322,18 @@ export default class StreamingJSONParser {
       };
 
       extractPaths(data);
-
     } catch (error) {
       // 如果完整解析失败，使用部分解析
-      console.log('完整解析失败，使用部分解析方法');
+      console.log("完整解析失败，使用部分解析方法");
       return this.partialPathExtraction(content, maxDepth);
     }
 
     return {
-      paths: targetPaths.length > 0 ? paths.filter(p => targetPaths.includes(p.path)) : paths,
+      paths: targetPaths.length > 0
+        ? paths.filter((p) => targetPaths.includes(p.path))
+        : paths,
       structure,
-      maxDepthFound
+      maxDepthFound,
     };
   }
 
@@ -345,14 +349,14 @@ export default class StreamingJSONParser {
     const pathMatch = content.match(/"([^"]+)":/g);
 
     if (pathMatch) {
-      pathMatch.forEach(match => {
-        const key = match.replace(/"/g, '').replace(':', '');
+      pathMatch.forEach((match) => {
+        const key = match.replace(/"/g, "").replace(":", "");
         paths.push({
           path: key,
           depth: 1,
-          key: key
+          key: key,
         });
-        structure[key] = { type: 'unknown', extracted: true };
+        structure[key] = { type: "unknown", extracted: true };
       });
       maxDepthFound = 1;
     }
@@ -360,7 +364,7 @@ export default class StreamingJSONParser {
     return {
       paths,
       structure,
-      maxDepthFound
+      maxDepthFound,
     };
   }
 
@@ -368,12 +372,16 @@ export default class StreamingJSONParser {
    * 获取值的预览
    */
   getValuePreview(value) {
-    if (value === null) return 'null';
-    if (typeof value === 'string') return value.substring(0, 50) + (value.length > 50 ? '...' : '');
-    if (typeof value === 'number') return value;
-    if (typeof value === 'boolean') return value;
+    if (value === null) return "null";
+    if (typeof value === "string") {
+      return value.substring(0, 50) + (value.length > 50 ? "..." : "");
+    }
+    if (typeof value === "number") return value;
+    if (typeof value === "boolean") return value;
     if (Array.isArray(value)) return `Array(${value.length})`;
-    if (typeof value === 'object') return `Object{${Object.keys(value).length}}`;
+    if (typeof value === "object") {
+      return `Object{${Object.keys(value).length}}`;
+    }
     return value;
   }
 
@@ -390,13 +398,15 @@ export default class StreamingJSONParser {
         topLevelKeyCount: this.results.topLevelKeys.length,
         maxDepth: this.results.maxDepth,
         totalElements: this.results.totalElements,
-        typeDistribution: { ...this.results.typeCounts }
+        typeDistribution: { ...this.results.typeCounts },
       },
       complexity: {
         depth: this.results.maxDepth,
         breadth: this.results.topLevelKeys.length,
-        density: (this.results.typeCounts.objects + this.results.typeCounts.arrays) / 1 // 简化计算
-      }
+        density:
+          (this.results.typeCounts.objects + this.results.typeCounts.arrays) /
+          1, // 简化计算
+      },
     };
   }
 
@@ -413,15 +423,15 @@ export default class StreamingJSONParser {
 
     if (fileSizeKB < 100) {
       // 小文件：直接解析
-      console.log('使用直接解析方法');
+      console.log("使用直接解析方法");
       result = await this.directParse(filePath);
     } else if (fileSizeKB < 1024) {
       // 中等文件：流式解析
-      console.log('使用流式解析方法');
+      console.log("使用流式解析方法");
       result = await this.parseLargeJSON(filePath, options);
     } else {
       // 大文件：深度解析
-      console.log('使用深度解析方法');
+      console.log("使用深度解析方法");
       result = await this.deepParse(filePath, options);
     }
 
@@ -429,7 +439,7 @@ export default class StreamingJSONParser {
       ...result,
       fileSizeKB: fileSizeKB.toFixed(2),
       recommendedMethod: this.recommendMethod(fileSizeKB),
-      parseTime: new Date().toISOString()
+      parseTime: new Date().toISOString(),
     };
   }
 
@@ -438,14 +448,14 @@ export default class StreamingJSONParser {
    */
   async directParse(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
       const data = JSON.parse(content);
 
       this.results.topLevelKeys = Object.keys(data);
       this.results.maxDepth = this.calculateMaxDepth(data);
 
       // 简单结构分析
-      Object.keys(data).forEach(key => {
+      Object.keys(data).forEach((key) => {
         this.analyzeValue(key, data[key], this.results.structure, 0);
       });
 
@@ -454,7 +464,7 @@ export default class StreamingJSONParser {
       return {
         success: false,
         method: "直接解析",
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -463,13 +473,13 @@ export default class StreamingJSONParser {
    * 计算最大深度
    */
   calculateMaxDepth(obj, currentDepth = 0) {
-    if (typeof obj !== 'object' || obj === null) {
+    if (typeof obj !== "object" || obj === null) {
       return currentDepth;
     }
 
     let maxDepth = currentDepth;
-    Object.values(obj).forEach(value => {
-      if (typeof value === 'object' && value !== null) {
+    Object.values(obj).forEach((value) => {
+      if (typeof value === "object" && value !== null) {
         const depth = this.calculateMaxDepth(value, currentDepth + 1);
         maxDepth = Math.max(maxDepth, depth);
       }

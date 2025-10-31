@@ -9,7 +9,7 @@ export default class JSONParserTester {
     console.log(`\n=== 测试文件: ${filePath} ===`);
 
     try {
-      const content = await fs.readFile(filePath, 'utf8');
+      const content = await fs.readFile(filePath, "utf8");
       const first5KB = content.substring(0, 5000);
       const first50KB = content.substring(0, 50000);
 
@@ -18,37 +18,37 @@ export default class JSONParserTester {
       console.log(`测试内容长度(50KB): ${first50KB.length} 字符`);
 
       // 方法1: 直接解析5KB
-      console.log('\n方法1: 直接解析前5KB');
+      console.log("\n方法1: 直接解析前5KB");
       try {
         const data = JSON.parse(first5KB);
         console.log(`✅ 成功! 顶层键数量: ${Object.keys(data).length}`);
-        console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(', ')}`);
+        console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(", ")}`);
       } catch (e) {
         console.log(`❌ 失败: ${e.message}`);
       }
 
       // 方法1a: 直接解析50KB
-      console.log('\n方法1a: 直接解析前50KB');
+      console.log("\n方法1a: 直接解析前50KB");
       try {
         const data = JSON.parse(first50KB);
         console.log(`✅ 成功! 顶层键数量: ${Object.keys(data).length}`);
-        console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(', ')}`);
+        console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(", ")}`);
       } catch (e) {
         console.log(`❌ 失败: ${e.message}`);
       }
 
       // 方法2: 查找完整对象(50KB)
-      console.log('\n方法2: 查找完整JSON对象(50KB)');
-      const firstObjStart = first50KB.indexOf('{');
+      console.log("\n方法2: 查找完整JSON对象(50KB)");
+      const firstObjStart = first50KB.indexOf("{");
       if (firstObjStart !== -1) {
         let braceCount = 0;
         let firstObjEnd = -1;
 
         for (let i = firstObjStart; i < first50KB.length; i++) {
           const char = first50KB[i];
-          if (char === '{') {
+          if (char === "{") {
             braceCount++;
-          } else if (char === '}') {
+          } else if (char === "}") {
             braceCount--;
             if (braceCount === 0) {
               firstObjEnd = i + 1;
@@ -63,7 +63,7 @@ export default class JSONParserTester {
             const data = JSON.parse(firstObject);
             console.log(`✅ 成功! 对象长度: ${firstObject.length} 字符`);
             console.log(`顶层键数量: ${Object.keys(data).length}`);
-            console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(', ')}`);
+            console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(", ")}`);
           } catch (e) {
             console.log(`❌ 解析失败: ${e.message}`);
             console.log(`提取的对象: ${firstObject.substring(0, 100)}...`);
@@ -76,14 +76,14 @@ export default class JSONParserTester {
       }
 
       // 方法3: 查找平衡JSON(50KB)
-      console.log('\n方法3: 查找平衡JSON结构(50KB)');
+      console.log("\n方法3: 查找平衡JSON结构(50KB)");
       const balancedJson = this.findBalancedJSON(first50KB);
       if (balancedJson) {
         try {
           const data = JSON.parse(balancedJson);
           console.log(`✅ 成功! 平衡JSON长度: ${balancedJson.length} 字符`);
           console.log(`顶层键数量: ${Object.keys(data).length}`);
-          console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(', ')}`);
+          console.log(`前5个键: ${Object.keys(data).slice(0, 5).join(", ")}`);
         } catch (e) {
           console.log(`❌ 解析失败: ${e.message}`);
           console.log(`平衡JSON: ${balancedJson.substring(0, 100)}...`);
@@ -93,9 +93,8 @@ export default class JSONParserTester {
       }
 
       // 显示文件前200个字符
-      console.log('\n文件前200个字符:');
-      console.log(content.substring(0, 200) + '...');
-
+      console.log("\n文件前200个字符:");
+      console.log(content.substring(0, 200) + "...");
     } catch (error) {
       console.error(`测试失败: ${error.message}`);
     }
@@ -110,10 +109,10 @@ export default class JSONParserTester {
     // 查找JSON开始位置
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      if (char === '{' || char === '[') {
+      if (char === "{" || char === "[") {
         startIdx = i;
-        braceCount = char === '{' ? 1 : 0;
-        bracketCount = char === '[' ? 1 : 0;
+        braceCount = char === "{" ? 1 : 0;
+        bracketCount = char === "[" ? 1 : 0;
         break;
       }
     }
@@ -123,13 +122,13 @@ export default class JSONParserTester {
     // 查找对应的结束位置
     for (let i = startIdx + 1; i < text.length; i++) {
       const char = text[i];
-      if (char === '{') {
+      if (char === "{") {
         braceCount++;
-      } else if (char === '}') {
+      } else if (char === "}") {
         braceCount--;
-      } else if (char === '[') {
+      } else if (char === "[") {
         bracketCount++;
-      } else if (char === ']') {
+      } else if (char === "]") {
         bracketCount--;
       }
 
@@ -146,9 +145,9 @@ export default class JSONParserTester {
 
   async testAllFiles() {
     const files = [
-      './test-output.json',
-      './large-example.json',
-      './openapi.json'
+      "./test-output.json",
+      "./large-example.json",
+      "./openapi.json",
     ];
 
     for (const file of files) {
