@@ -315,7 +315,7 @@ class StreamJSONAnalyzer {
 }
 
 // Main execution
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.main) {
     async function main() {
         const analyzer = new StreamJSONAnalyzer();
 
