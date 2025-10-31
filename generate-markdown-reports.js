@@ -178,22 +178,24 @@ export default class MarkdownReportGenerator {
       topLevelKeys: [],
       success: false,
       method: "未解析",
-      data: null
+      data: null,
+      failureReason: ""
     };
 
     try {
-      // 方法1: 直接尝试解析前几KB
+      // 方法1: 直接尝试解析前50KB
       try {
         const data = JSON.parse(text);
         result = {
           topLevelKeys: Object.keys(data),
           success: true,
           method: "直接解析",
-          data: data
+          data: data,
+          failureReason: ""
         };
         return result;
       } catch (e) {
-        // 继续尝试其他方法
+        result.failureReason += `直接解析失败: ${e.message.substring(0, 100)}... `;
       }
 
       // 方法2: 查找完整的JSON对象
@@ -215,58 +217,73 @@ export default class MarkdownReportGenerator {
         }
 
         if (firstObjEnd !== -1) {
-          const firstObject = text.substring(firstObjStart, firstObjEnd);
-          const data = JSON.parse(firstObject);
-          result = {
-            topLevelKeys: Object.keys(data),
-            success: true,
-            method: "智能提取完整对象",
-            data: data
-          };
-          return result;
-        }
-      }
-
-      // 方法3: 查找平衡的JSON结构
-      const balancedJson = this.findBalancedJSON(text);
-      if (balancedJson) {
-        const data = JSON.parse(balancedJson);
-        result = {
-          topLevelKeys: Object.keys(data),
-          success: true,
-          method: "平衡JSON结构解析",
-          data: data
-        };
-        return result;
-      }
-
-      // 方法4: 尝试提取第一个对象的键
-      if (firstObjStart !== -1) {
-        const remainingText = text.substring(firstObjStart);
-        const firstLineMatch = remainingText.match(/^\s*\{[\s\S]*?\}/);
-
-        if (firstLineMatch) {
           try {
-            const data = JSON.parse(firstLineMatch[0]);
+            const firstObject = text.substring(firstObjStart, firstObjEnd);
+            const data = JSON.parse(firstObject);
             result = {
               topLevelKeys: Object.keys(data),
               success: true,
-              method: "第一行对象解析",
-              data: data
+              method: "智能提取完整对象",
+              data: data,
+              failureReason: ""
             };
             return result;
           } catch (e) {
-            // 继续其他方法
+            result.failureReason += `完整对象解析失败: ${e.message.substring(0, 100)}... `;
           }
+        } else {
+          result.failureReason += "找不到完整对象结束位置 ";
+        }
+      } else {
+        result.failureReason += "找不到JSON对象开始位置 ";
+      }
+
+      // 方法3: 查找平衡的JSON结构
+      try {
+        const balancedJson = this.findBalancedJSON(text);
+        if (balancedJson) {
+          const data = JSON.parse(balancedJson);
+          result = {
+            topLevelKeys: Object.keys(data),
+            success: true,
+            method: "平衡JSON结构解析",
+            data: data,
+            failureReason: ""
+          };
+          return result;
+        }
+      } catch (e) {
+        result.failureReason += `平衡JSON解析失败: ${e.message.substring(0, 100)}... `;
+      }
+
+      // 方法4: 提取第一个对象的键名（使用正则表达式）
+      if (firstObjStart !== -1) {
+        try {
+          const remainingText = text.substring(firstObjStart);
+          // 查找第一个双引号包围的键名
+          const keyMatches = remainingText.match(/"([^"]+)"/g);
+          if (keyMatches && keyMatches.length > 0) {
+            const extractedKeys = keyMatches.slice(0, 20).map(key => key.replace(/"/g, ''));
+            result = {
+              topLevelKeys: extractedKeys,
+              success: true,
+              method: "正则表达式键名提取",
+              data: null,
+              failureReason: ""
+            };
+            return result;
+          }
+        } catch (e) {
+          result.failureReason += `键名提取失败: ${e.message.substring(0, 100)}... `;
         }
       }
 
-      // 所有方法都失败，返回空结果
-      result.method = "所有解析方法失败";
+      // 所有方法都失败，返回详细的失败信息
+      result.method = "部分解析失败 - 建议使用完整分析方法";
       return result;
 
     } catch (error) {
-      result.method = `解析错误: ${error.message}`;
+      result.method = `解析错误: ${error.message.substring(0, 100)}...`;
       return result;
     }
   }
