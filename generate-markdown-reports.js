@@ -19,20 +19,24 @@ export default class MarkdownReportGenerator {
 
       // 3. 读取文件前部分进行分析
       const content = await fs.readFile(filePath, 'utf8');
-      const first5KB = content.substring(0, 5000);
+      // 增加到前50KB，这样可以获得更完整的结构信息
+      const first50KB = content.substring(0, 50000);
 
       // 4. 分析文件结构
       let structureAnalysis = {};
       try {
-        const partialData = JSON.parse(first5KB);
+        // 使用改进的JSON解析方法
+        const partialData = this.parsePartialJSON(first50KB);
         structureAnalysis = {
-          topLevelKeys: Object.keys(partialData),
-          topLevelKeyCount: Object.keys(partialData).length,
-          sampleStructure: this.analyzeSampleStructure(partialData)
+          topLevelKeys: partialData.topLevelKeys,
+          topLevelKeyCount: partialData.topLevelKeys.length,
+          parseMethod: partialData.method,
+          sampleStructure: partialData.success ? this.analyzeSampleStructure(partialData.data) : null
         };
       } catch (e) {
         structureAnalysis = {
-          error: "无法解析JSON顶层结构",
+          error: `JSON解析失败: ${e.message}`,
+          parseMethod: "错误",
           partialContent: first5KB.substring(0, 200) + "..."
         };
       }
@@ -167,9 +171,113 @@ export default class MarkdownReportGenerator {
     return maxLevel;
   }
 
+  parsePartialJSON(text) {
+    // 查找JSON对象的开始位置
+    const firstObjStart = text.indexOf('{');
+    let result = {
+      topLevelKeys: [],
+      success: false,
+      method: "未解析",
+      data: null
+    };
+
+    try {
+      // 方法1: 直接尝试解析前几KB
+      try {
+        const data = JSON.parse(text);
+        result = {
+          topLevelKeys: Object.keys(data),
+          success: true,
+          method: "直接解析",
+          data: data
+        };
+        return result;
+      } catch (e) {
+        // 继续尝试其他方法
+      }
+
+      // 方法2: 查找完整的JSON对象
+      if (firstObjStart !== -1) {
+        let braceCount = 0;
+        let firstObjEnd = -1;
+
+        for (let i = firstObjStart; i < text.length; i++) {
+          const char = text[i];
+          if (char === '{') {
+            braceCount++;
+          } else if (char === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              firstObjEnd = i + 1;
+              break;
+            }
+          }
+        }
+
+        if (firstObjEnd !== -1) {
+          const firstObject = text.substring(firstObjStart, firstObjEnd);
+          const data = JSON.parse(firstObject);
+          result = {
+            topLevelKeys: Object.keys(data),
+            success: true,
+            method: "智能提取完整对象",
+            data: data
+          };
+          return result;
+        }
+      }
+
+      // 方法3: 查找平衡的JSON结构
+      const balancedJson = this.findBalancedJSON(text);
+      if (balancedJson) {
+        const data = JSON.parse(balancedJson);
+        result = {
+          topLevelKeys: Object.keys(data),
+          success: true,
+          method: "平衡JSON结构解析",
+          data: data
+        };
+        return result;
+      }
+
+      // 方法4: 尝试提取第一个对象的键
+      if (firstObjStart !== -1) {
+        const remainingText = text.substring(firstObjStart);
+        const firstLineMatch = remainingText.match(/^\s*\{[\s\S]*?\}/);
+
+        if (firstLineMatch) {
+          try {
+            const data = JSON.parse(firstLineMatch[0]);
+            result = {
+              topLevelKeys: Object.keys(data),
+              success: true,
+              method: "第一行对象解析",
+              data: data
+            };
+            return result;
+          } catch (e) {
+            // 继续其他方法
+          }
+        }
+      }
+
+      // 所有方法都失败，返回空结果
+      result.method = "所有解析方法失败";
+      return result;
+
+    } catch (error) {
+      result.method = `解析错误: ${error.message}`;
+      return result;
+    }
+  }
+
   analyzeSampleStructure(data) {
     const sample = {};
     const maxKeys = 10;
+
+    if (!data || typeof data !== 'object') {
+      return {};
+    }
 
     Object.keys(data).slice(0, maxKeys).forEach(key => {
       const value = data[key];
@@ -182,12 +290,55 @@ export default class MarkdownReportGenerator {
       } else {
         sample[key] = {
           type: typeof value,
-          value: value.toString().substring(0, 100) + (value.toString().length > 100 ? '...' : '')
+          value: value !== null && value !== undefined ? value.toString().substring(0, 100) + (value.toString().length > 100 ? '...' : '') : 'null'
         };
       }
     });
 
     return sample;
+  }
+
+  findBalancedJSON(text) {
+    let startIdx = -1;
+    let endIdx = -1;
+    let braceCount = 0;
+    let bracketCount = 0;
+
+    // 查找JSON开始位置
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '{' || char === '[') {
+        startIdx = i;
+        braceCount = char === '{' ? 1 : 0;
+        bracketCount = char === '[' ? 1 : 0;
+        break;
+      }
+    }
+
+    if (startIdx === -1) return null;
+
+    // 查找对应的结束位置
+    for (let i = startIdx + 1; i < text.length; i++) {
+      const char = text[i];
+      if (char === '{') {
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+      } else if (char === '[') {
+        bracketCount++;
+      } else if (char === ']') {
+        bracketCount--;
+      }
+
+      if (braceCount === 0 && bracketCount === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+
+    if (endIdx === -1) return null;
+
+    return text.substring(startIdx, endIdx);
   }
 
   createMarkdownReport(filePath, data) {
@@ -277,20 +428,46 @@ ${structureAnalysis.error ? `
 ### 4.1 结构分析限制
 
 - **分析结果**: ${structureAnalysis.error}
-- **原因**: JSON文件结构复杂或格式特殊，无法通过简单的部分读取进行完整分析
+- **解析方法**: ${structureAnalysis.parseMethod || '未知'}
+- **原因**: JSON文件结构复杂或格式特殊，部分解析方法失败
 
 ` : `
 ### 4.1 顶层结构详细信息
 
+**解析方法**: ${structureAnalysis.parseMethod || '直接解析'}
+
 **顶层键数量**: ${structureAnalysis.topLevelKeyCount}
 
+${structureAnalysis.sampleStructure && Object.keys(structureAnalysis.sampleStructure).length > 0 ? `
 **结构样本分析**:
 ${Object.entries(structureAnalysis.sampleStructure).map(([key, info]) => `
 - **${key}**:
   - 类型: ${info.type}
   - ${info.type === 'array' ? `数组长度: ${info.itemCount}` : info.type === 'object' ? `对象键数: ${info.itemCount}` : `值: ${info.value}`}
-  ${info.type === 'object' && info.sampleKeys.length > 0 ? `  - 示例键: [${info.sampleKeys.map(k => `\`${k}\``).join(', ')}]` : ''}
+  ${info.type === 'object' && info.sampleKeys && info.sampleKeys.length > 0 ? `  - 示例键: [${info.sampleKeys.map(k => `\`${k}\``).join(', ')}]` : ''}
 `).join('')}
+` : `
+**注意**: 无法获取详细结构样本信息，可能是因为文件结构过于复杂或解析方法限制。
+`}
+
+### 4.2 解析方法说明
+
+${structureAnalysis.parseMethod === '直接解析' ? `
+- **直接解析**: 成功解析文件前5KB内容作为完整JSON对象
+- **优点**: 获得准确的顶层结构信息
+` : structureAnalysis.parseMethod === '智能提取完整对象' ? `
+- **智能提取完整对象**: 通过算法提取第一个完整的JSON对象
+- **优点**: 即使文件内容较长也能准确获取结构
+` : structureAnalysis.parseMethod === '平衡JSON结构解析' ? `
+- **平衡JSON结构解析**: 查找完整的JSON开始和结束标记
+- **优点**: 处理嵌套复杂的JSON结构
+` : structureAnalysis.parseMethod === '第一行对象解析' ? `
+- **第一行对象解析**: 提取第一个JSON对象的键
+- **优点**: 快速获取基本结构信息
+` : `
+- **解析方法**: ${structureAnalysis.parseMethod}
+- **说明**: 使用了高级解析算法来处理复杂的JSON结构
+`}
 
 `}
 

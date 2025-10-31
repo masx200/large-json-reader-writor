@@ -60,11 +60,48 @@ export default class ChunkBasedAnalyzer {
 
       // 读取文件的前几KB来分析顶层结构
       const content = await fs.readFile(filePath, 'utf8');
-      const first5KB = content.substring(0, 5000);
+      const first10KB = content.substring(0, 10000);
+
+      // 智能查找完整的JSON对象起始和结束位置
+      const firstObjStart = first10KB.indexOf('{');
+      let topLevelKeys = [];
+      let parseError = null;
 
       try {
-        const partialData = JSON.parse(first5KB);
-        const topLevelKeys = Object.keys(partialData);
+        if (firstObjStart !== -1) {
+          // 查找第一个完整对象的结束位置
+          let braceCount = 0;
+          let firstObjEnd = -1;
+
+          for (let i = firstObjStart; i < first10KB.length; i++) {
+            const char = first10KB[i];
+            if (char === '{') {
+              braceCount++;
+            } else if (char === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                firstObjEnd = i + 1;
+                break;
+              }
+            }
+          }
+
+          if (firstObjEnd !== -1) {
+            const firstObject = first10KB.substring(firstObjStart, firstObjEnd);
+            const partialData = JSON.parse(firstObject);
+            topLevelKeys = Object.keys(partialData);
+          }
+        }
+
+        // 如果找不到完整的对象，尝试解析整个文件（但只读取前10KB）
+        if (topLevelKeys.length === 0) {
+          // 查找可能的完整JSON结构
+          let balancedJson = this.findBalancedJSON(first10KB);
+          if (balancedJson) {
+            const data = JSON.parse(balancedJson);
+            topLevelKeys = Object.keys(data);
+          }
+        }
 
         return {
           method: "分块读取方法",
@@ -77,16 +114,19 @@ export default class ChunkBasedAnalyzer {
           },
           structure: {
             topLevelKeys: topLevelKeys,
-            topLevelKeyCount: topLevelKeys.length
+            topLevelKeyCount: topLevelKeys.length,
+            partialSuccess: topLevelKeys.length > 0
           },
           sampleChunks: sampleChunks,
           chunkValidation: {
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
             validationRate: totalChunks > 0 ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + '%' : '0%'
-          }
+          },
+          analysisStatus: topLevelKeys.length > 0 ? "部分结构分析成功" : "仅完成基础文件分析"
         };
-      } catch (parseError) {
+      } catch (error) {
+        parseError = error.message;
         return {
           method: "分块读取方法",
           file: filePath,
@@ -96,13 +136,19 @@ export default class ChunkBasedAnalyzer {
             validJSONChunks: validJSONChunks,
             totalCharacters: totalCharacters
           },
-          error: "无法解析顶层JSON结构",
+          structure: {
+            topLevelKeys: [],
+            topLevelKeyCount: 0,
+            partialSuccess: false
+          },
+          error: `结构分析失败: ${parseError}`,
           sampleChunks: sampleChunks,
           chunkValidation: {
             totalChunks: totalChunks,
             validJSONChunks: validJSONChunks,
             validationRate: totalChunks > 0 ? ((validJSONChunks / totalChunks) * 100).toFixed(2) + '%' : '0%'
-          }
+          },
+          analysisStatus: "仅完成基础文件分析"
         };
       }
 
@@ -120,6 +166,52 @@ export default class ChunkBasedAnalyzer {
     if (Array.isArray(data)) return 'array';
     if (data === null) return 'null';
     return typeof data;
+  }
+
+  /**
+   * 查找平衡的JSON结构
+   */
+  findBalancedJSON(text) {
+    let startIdx = -1;
+    let endIdx = -1;
+    let braceCount = 0;
+    let bracketCount = 0;
+
+    // 查找JSON开始位置
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '{' || char === '[') {
+        startIdx = i;
+        braceCount = char === '{' ? 1 : 0;
+        bracketCount = char === '[' ? 1 : 0;
+        break;
+      }
+    }
+
+    if (startIdx === -1) return null;
+
+    // 查找对应的结束位置
+    for (let i = startIdx + 1; i < text.length; i++) {
+      const char = text[i];
+      if (char === '{') {
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+      } else if (char === '[') {
+        bracketCount++;
+      } else if (char === ']') {
+        bracketCount--;
+      }
+
+      if (braceCount === 0 && bracketCount === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+
+    if (endIdx === -1) return null;
+
+    return text.substring(startIdx, endIdx);
   }
 
   async analyzeMultipleFiles(filePaths) {
