@@ -1,8 +1,21 @@
 import fs from "fs";
-import { chain } from "stream-chain";
-import { parser } from "stream-json";
-import { streamObject } from "stream-json/streamers/StreamObject.js";
-import { streamValues } from "stream-json/streamers/StreamValues.js";
+
+// 使用动态导入来处理CommonJS模块
+let streamChain, streamJson, streamValues;
+
+try {
+  streamChain = await import('stream-chain');
+  streamJson = await import('stream-json');
+  streamValues = (await import('stream-json/streamers/StreamValues.js')).default ||
+                 (await import('stream-json/streamers/StreamValues.js'));
+
+} catch (error) {
+  console.error('导入模块失败:', error);
+  process.exit(1);
+}
+
+const { chain } = streamChain;
+const { parser } = streamJson;
 
 export default class StreamJSONParser {
   constructor() {
