@@ -1,8 +1,8 @@
 import streamChain from 'stream-chain';
 import streamJson from 'stream-json';
-import { StreamValues } from 'stream-json/streamers/StreamValues.js';
-import { StreamArray } from 'stream-json/streamers/StreamArray.js';
-import { StreamObject } from 'stream-json/streamers/StreamObject.js';
+import StreamValuesModule from 'stream-json/streamers/StreamValues.js';
+import StreamArrayModule from 'stream-json/streamers/StreamArray.js';
+import StreamObjectModule from 'stream-json/streamers/StreamObject.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -47,7 +47,7 @@ export default class JSONAnalyzer {
         const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
           streamJson.parser(),
-          new StreamValues()
+          new StreamValuesModule()
         ]);
 
         let currentPath = [];
