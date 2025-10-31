@@ -3,22 +3,24 @@ import fs from "fs";
 // 使用动态导入来处理CommonJS模块
 let streamChain, streamJson, streamValues;
 
-try {
-  streamChain = await import('stream-chain');
-  streamJson = await import('stream-json');
-  streamValues = (await import('stream-json/streamers/StreamValues.js')).default ||
-                 (await import('stream-json/streamers/StreamValues.js'));
+// 在模块级别初始化流式JSON模块
+async function initializeStreamModules() {
+  try {
+    streamChain = await import('stream-chain');
+    streamJson = await import('stream-json');
+    streamValues = (await import('stream-json/streamers/StreamValues.js')).default ||
+                   (await import('stream-json/streamers/StreamValues.js'));
 
-} catch (error) {
-  console.error('导入模块失败:', error);
-  process.exit(1);
+    return { success: true };
+  } catch (error) {
+    console.error('导入模块失败:', error);
+    return { success: false, error };
+  }
 }
-
-const { chain } = streamChain;
-const { parser } = streamJson;
 
 export default class StreamJSONParser {
   constructor() {
+    this.modulesInitialized = false;
     this.results = {
       topLevelKeys: [],
       structure: {},
@@ -38,6 +40,21 @@ export default class StreamJSONParser {
   }
 
   /**
+   * 初始化流式JSON模块
+   */
+  async initializeModules() {
+    if (this.modulesInitialized) return true;
+
+    const result = await initializeStreamModules();
+    if (!result.success) {
+      throw new Error(`模块初始化失败: ${result.error.message}`);
+    }
+
+    this.modulesInitialized = true;
+    return true;
+  }
+
+  /**
    * 使用stream-json库进行流式解析
    */
   async parseWithStreamJSON(filePath, options = {}) {
@@ -50,6 +67,9 @@ export default class StreamJSONParser {
     console.log(`开始stream-json流式解析: ${filePath}`);
     console.log(`块大小: ${chunkSize} bytes`);
 
+    // 初始化模块
+    await this.initializeModules();
+
     return new Promise((resolve, reject) => {
       const stats = fs.statSync(filePath);
       const totalSize = stats.size;
@@ -57,9 +77,9 @@ export default class StreamJSONParser {
       let objectCount = 0;
 
       // 创建流式JSON解析管道
-      const pipeline = chain([
+      const pipeline = streamChain.chain([
         fs.createReadStream(filePath, { highWaterMark: chunkSize }),
-        parser(),
+        streamJson.default.parser(),
         streamValues() // 流式输出值
       ]);
 
@@ -135,15 +155,18 @@ export default class StreamJSONParser {
 
     console.log(`开始数组内容解析: ${filePath} -> ${targetArray}`);
 
+    // 初始化模块
+    await this.initializeModules();
+
     try {
       const stats = fs.statSync(filePath);
       const totalSize = stats.size;
 
       return new Promise((resolve, reject) => {
         // 创建流式管道来解析数组元素
-        const pipeline = chain([
+        const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
-          parser(),
+          streamJson.default.parser(),
           streamValues()
         ]);
 
@@ -216,18 +239,20 @@ export default class StreamJSONParser {
 
     console.log(`开始深度路径解析: ${filePath}`);
 
+    // 初始化模块
+    await this.initializeModules();
+
     try {
-      const { chain } = await import('stream-chain');
-      const { pick } = await import('stream-json/filters/Pick');
+      const { pick } = await import('stream-json/filters/Pick.js');
 
       const stats = fs.statSync(filePath);
       const totalSize = stats.size;
 
       return new Promise((resolve, reject) => {
         // 创建带有Pick过滤器的管道
-        const pipeline = chain([
+        const pipeline = streamChain.chain([
           fs.createReadStream(filePath),
-          parser(),
+          streamJson.default.parser(),
           pick({ filter: targetPaths }), // 选择特定路径
           streamValues()
         ]);
